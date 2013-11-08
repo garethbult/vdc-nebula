@@ -1,0 +1,55 @@
+#!/bin/bash
+
+SRC=$1
+DST=$2
+
+VMID=$3
+DSID=$4
+
+if [ -z "${ONE_LOCATION}" ]; then
+    TMCOMMON=/var/lib/one/remotes/tm/tm_common.sh
+else
+    TMCOMMON=$ONE_LOCATION/var/remotes/tm/tm_common.sh
+fi
+
+. $TMCOMMON
+
+tool="${ONE_LOCAL_VAR}/remotes/hooks/vdc/tool.py"
+conf="${ONE_LOCAL_VAR}/remotes/hooks/vdc/mkconfig.py"
+vdc="/home/gareth/Git/vdc/vdc-client"
+vdctool="$vdc/vdc-tool"
+vdcstore="$vdc/vdc-store"
+
+DST_PATH=`arg_path $DST`
+DST_HOST=`arg_host $DST`
+DST_DIR=`dirname $DST_PATH`
+
+SRC_ARG_PATH=`arg_path $SRC`
+
+DST_DS_PATH="$(dirname $(dirname $(dirname $DST_PATH)))"
+SRC_DS_PATH="$(dirname $(dirname $SRC_ARG_PATH))"
+
+SRC_PATH="${DST_DS_PATH}${SRC_ARG_PATH##$SRC_DS_PATH}"
+
+logger "Make Path ($DST_HOST) ($DST_DIR)"
+ssh_make_path $DST_HOST $DST_DIR
+
+NAME="ON_IM_$VMID"
+CACHE_SIZE="none"
+CACHE_LVM="none"
+DS_NAME="none"
+
+${conf}
+eval `${tool} ln $VMID $DSID`
+sleep 2
+
+function execute {
+	logger "@$DST_HOST ${1}" 
+	ssh_exec_and_log ${DST_HOST} "${1}" "${2}"
+}
+
+execute "sudo $vdctool -n $NAME --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
+execute "sudo $vdcstore -n ${NAME}" "Error starting VDC"
+execute "cd ${DST_DIR}; rm ${DST_PATH}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
+
+exit 0

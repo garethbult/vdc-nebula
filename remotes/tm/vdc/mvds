@@ -1,0 +1,41 @@
+#!/bin/bash
+
+logger "TM MVDS was executed"
+logger "SRC=$1"
+logger "DST=$2"
+logger "VMID=$3"
+logger "DSID=$4"
+
+SRC=$1
+DST=$2
+VMID=$3
+DSID=$4
+
+if [ -z "${ONE_LOCATION}" ]; then
+    TMCOMMON=/var/lib/one/remotes/tm/tm_common.sh
+else
+    TMCOMMON=$ONE_LOCATION/var/remotes/tm/tm_common.sh
+fi
+
+. $TMCOMMON
+
+tool="${ONE_LOCAL_VAR}/remotes/hooks/vdc/tool.py"
+conf="${ONE_LOCAL_VAR}/remotes/hooks/vdc/mkconfig.py"
+vdc="/home/gareth/Git/vdc/vdc-client"
+vdctool="$vdc/vdc-tool"
+
+NAME="ON_IM_$VMID"
+DST_HOST=`arg_host $SRC`
+
+function execute {
+	logger "@$DST_HOST ${1}" 
+	ssh_exec_and_log ${DST_HOST} "${1}" "${2}"
+}
+
+eval `${tool} ln $VMID $DSID`
+execute "sudo $vdctool -n $NAME --stop" "Error stopping Cache"
+sleep 2
+execute "sudo lvremove -f ${CACHE_PATH}/${NAME}" "Error removing Cache LVM"
+
+exit 0
+

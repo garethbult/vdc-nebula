@@ -1,0 +1,55 @@
+#!/bin/bash
+
+logger "TM DELETE was executed"
+logger "DST=$1"
+logger "VMID=$2"
+logger "DSID=$3"
+
+DST=$1
+VMID=$2
+DSID=$3
+
+if [ -z "${ONE_LOCATION}" ]; then
+    TMCOMMON=/var/lib/one/remotes/tm/tm_common.sh
+else
+    TMCOMMON=$ONE_LOCATION/var/remotes/tm/tm_common.sh
+fi
+
+. $TMCOMMON
+
+tool="${ONE_LOCAL_VAR}/remotes/hooks/vdc/tool.py"
+conf="${ONE_LOCAL_VAR}/remotes/hooks/vdc/mkconfig.py"
+vdc="/home/gareth/Git/vdc/vdc-client"
+vdctool="$vdc/vdc-tool"
+
+NAME="ON_IM_$VMID"
+DST_HOST=`arg_host $DST`
+
+function execute {
+	logger "@$DST_HOST ${1}" 
+	ssh_exec_and_log ${DST_HOST} "${1}" "${2}"
+}
+
+eval `${tool} ln $VMID $DSID`
+execute "sudo $vdctool -n $NAME --stop" "Error stopping Cache"
+sleep 2
+
+eval `${tool} del ${NAME}`
+
+logger "Here..."
+
+if [ ! -z "${IM_PATH}" ]
+then
+	logger "sudo rm -rf ${IM_PATH}/Snapshots.ldb"
+	sudo rm -rf ${IM_PATH}/Snapshots.ldb
+	logger "sudo rm -f  ${IM_PATH}/Image.img"
+	sudo rm -f  ${IM_PATH}/Image.img
+	logger "sudo rmdir  ${IM_PATH}"
+	sudo rmdir ${IM_PATH}
+else
+	logger "IM_PATH was not set"
+fi
+
+execute "sudo lvremove -f ${CACHE_PATH}/${NAME}" "Error removing Cache LVM"
+
+exit 0
