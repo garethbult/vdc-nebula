@@ -1,4 +1,4 @@
-VDC-NEBULA
+<pre>VDC-NEBULA
 ==========
 
 These scripts provide the glue between OpenNebula and vdc-store. More documentation needs to be written
@@ -36,3 +36,4 @@ DATASTORE_MAD = [
 And as far as the glue is concerned, you're good to go.
 - Now you need a couple of patches to substone to give you "vdc" as a datastore type, and a working
 - copy of vdc-server and vdc-store.
+</PRE>
