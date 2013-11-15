@@ -32,7 +32,11 @@ function execute {
 	ssh_exec_and_log ${DST_HOST} "${1}" "${2}"
 }
 
-eval `${tool} ln $VMID $DSID`
+logger "`${tool} ln $VMID $DSID $DST_HOST`"
+eval `${tool} ln $VMID $DSID $DST_HOST`
+
+CACHE_PATH="/dev/${CACHE_LVM}"
+
 execute "sudo $vdctool -n $NAME --stop" "Error stopping Cache"
 sleep 2
 execute "sudo lvremove -f ${CACHE_PATH}/${NAME}" "Error removing Cache LVM"

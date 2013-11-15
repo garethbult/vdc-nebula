@@ -21,8 +21,7 @@ def xmlParse(elements,xml):
     else:
       elements[elem.tag] = elem.text
 
-
-db = MySQLdb.connect(host="127.0.0.1",user="root",passwd="",db="opennebula")
+db = MySQLdb.connect(host="nebula",user="oneadmin",passwd="oneadmin",db="opennebula")
 cur = db.cursor(MySQLdb.cursors.DictCursor) 
 cur.execute("FLUSH QUERY CACHE");
 
@@ -48,33 +47,40 @@ dst.write("  size = 10G\n\n")
 for row in cur.fetchall():
   elements = {}
   xmlParse(elements,ET.fromstring(row['body']))
-
   IMAGE_ID = elements['TEMPLATE']['DISK']['IMAGE_ID']
-
   cur.execute("SELECT * FROM image_pool WHERE oid = "+str(IMAGE_ID))
   for image in cur.fetchall():
-     sub = {}
-     xmlParse(sub,ET.fromstring(image['body']))
-     if sub.has_key('TEMPLATE'):
-     	if sub['TEMPLATE'].has_key('CAPACITY'): 
-          store = sub['DATASTORE']
-          if not store in VDC_NAMES: continue
-          store_id = sub['DATASTORE_ID']
-          persist = int(sub['PERSISTENT'])
-          size = sub['TEMPLATE']['CAPACITY']
-          id = str(elements['ID'])
-          name = "ON_IM_"+id
-          if not persist:
+    sub = {}
+    xmlParse(sub,ET.fromstring(image['body']))
+    if sub.has_key('TEMPLATE'):
+      if sub['TEMPLATE'].has_key('CAPACITY'): 
+        store = sub['DATASTORE']
+        if not store in VDC_NAMES: continue
+        if store <> hostname: continue
+        store_id = sub['DATASTORE_ID']
+        persist = int(sub['PERSISTENT'])
+        size = sub['TEMPLATE']['CAPACITY']
+        id = str(elements['ID'])
+        name = "ON_IM_"+id
+        if not persist:
+          cur.execute("SELECT * FROM vdc WHERE name = '"+name+"'")
+          rows = cur.fetchall()
+          if not len(rows):
+            sleep(2)
             cur.execute("SELECT * FROM vdc WHERE name = '"+name+"'")
-            row = cur.fetchall()[0]
-            path = row['path']
-          else:
-            path = sub['SOURCE']
+            rows = cur.fetchall()
+            # FIXME :: THIS is a timing issue, needs a better fix
+            if not len(rows): continue
+
+          row = rows[0]
+          path = row['path']
+        else:
+          path = sub['SOURCE']
  
-          dst.write("["+name+"]\n")
-          dst.write("  path = " + path+"\n")
-          dst.write("  size = " + size + "\n")
-          dst.write("  proto = lsfs\n\n")
+        dst.write("["+name+"]\n")
+        dst.write("  path = " + path+"\n")
+        dst.write("  size = " + size + "\n")
+        dst.write("  proto = lsfs\n\n")
 	
 dst.close()
 sys.exit(0)

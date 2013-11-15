@@ -2,9 +2,10 @@
 
 SRC=$1
 DST=$2
-
 VMID=$3
 DSID=$4
+
+logger "TM ln SRC=$SRC DST=$DST VMID=$VMID DSID=$DSID"
 
 if [ -z "${ONE_LOCATION}" ]; then
     TMCOMMON=/var/lib/one/remotes/tm/tm_common.sh
@@ -39,17 +40,21 @@ CACHE_SIZE="none"
 CACHE_LVM="none"
 DS_NAME="none"
 
-${conf}
-eval `${tool} ln $VMID $DSID`
-sleep 2
+logger "==> ${tool} ln $VMID $DSID $DST_HOST"
+logger "[[ `${tool} ln $VMID $DSID $DST_HOST` ]]"
+eval `${tool} ln $VMID $DSID $DST_HOST`
 
 function execute {
 	logger "@$DST_HOST ${1}" 
 	ssh_exec_and_log ${DST_HOST} "${1}" "${2}"
 }
 
+logger "${conf} @ ${DS_NAME}"
+ssh_exec_and_log ${DS_NAME} ${conf} "Error Updating VDC Server Config"
+sleep 2
+
 execute "sudo $vdctool -n $NAME --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
 execute "sudo $vdcstore -n ${NAME}" "Error starting VDC"
-execute "cd ${DST_DIR}; rm ${DST_PATH}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
+execute "cd ${DST_DIR}; rm -f ${DST_PATH}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
 
 exit 0

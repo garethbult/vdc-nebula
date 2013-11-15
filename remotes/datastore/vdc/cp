@@ -1,6 +1,9 @@
 #!/bin/bash
 
+DRV_ACTION=$1
+ID=$2
 
+logger "DS CP :: ($ID)"
 
 if [ -z "${ONE_LOCATION}" ]; then
     LIB_LOCATION=/usr/lib/one
@@ -9,19 +12,10 @@ else
 fi
 
 . $LIB_LOCATION/sh/scripts_common.sh
-
-DRIVER_PATH=$(dirname $0)
-source ${DRIVER_PATH}/../libfs.sh
-
-DRV_ACTION=$1
-ID=$2
-
-UTILS_PATH="${DRIVER_PATH}/.."
-
-XPATH="$UTILS_PATH/xpath.rb -b $DRV_ACTION"
-
+DRIVER_PATH=$(dirname $(dirname $0))
+source ${DRIVER_PATH}/libfs.sh
+XPATH="${DRIVER_PATH}/xpath.rb -b $DRV_ACTION"
 unset i XPATH_ELEMENTS
-
 while IFS= read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
 done < <($XPATH     /DS_DRIVER_ACTION_DATA/DATASTORE/BASE_PATH \
@@ -32,7 +26,9 @@ done < <($XPATH     /DS_DRIVER_ACTION_DATA/DATASTORE/BASE_PATH \
                     /DS_DRIVER_ACTION_DATA/IMAGE/TEMPLATE/SHA1 \
                     /DS_DRIVER_ACTION_DATA/DATASTORE/TEMPLATE/NO_DECOMPRESS \
                     /DS_DRIVER_ACTION_DATA/DATASTORE/TEMPLATE/LIMIT_TRANSFER_BW\
- 					/DS_DRIVER_ACTION_DATA/DATASTORE/TEMPLATE/HOST)
+ 					/DS_DRIVER_ACTION_DATA/DATASTORE/TEMPLATE/HOST\
+ 					/DS_DRIVER_ACTION_DATA/DATASTORE/TEMPLATE/MOUNTPOINT\
+ 					/DS_DRIVER_ACTION_DATA/DATASTORE/ID)
 
 BASE_PATH="${XPATH_ELEMENTS[0]}"
 RESTRICTED_DIRS="${XPATH_ELEMENTS[1]}"
@@ -43,16 +39,36 @@ SHA1="${XPATH_ELEMENTS[5]}"
 NO_DECOMPRESS="${XPATH_ELEMENTS[6]}"
 LIMIT_TRANSFER_BW="${XPATH_ELEMENTS[7]}"
 DST_HOST="${XPATH_ELEMENTS[8]:-$HOST}"
+MOUNTPOINT="${XPATH_ELEMENTS[9]}"
+DS_ID="${XPATH_ELEMENTS[10]}"
 
-mkdir -p "$BASE_PATH"
+DS=$(dirname $BASE_PATH)
 
 set_up_datastore "$BASE_PATH" "$RESTRICTED_DIRS" "$SAFE_DIRS"
 
 DST=`generate_image_path`
-mkdir -p $DST
+
+#logger "Base=$BASE_PATH"
+#logger "Src=$SRC"
+#logger "Host=$DST_HOST"
+#logger "Mountpoint=$MOUNTPOINT"
+#logger "Dst=$DST"
+#logger "DS=$DS"
+#logger "DS_ID=$DS_ID"
+#logger "DRIVER=$DRIVER_PATH"
+
+if [ ! -h ${DS}/${DS_ID} ] ; then
+	path="${MOUNTPOINT}/datastores/${DS_ID}"
+	ssh_exec_and_log "$DST_HOST" "mkdir -p ${path}" "Error creating directory ${path}"
+    ln -s ${path} ${DS}/${DS_ID}
+fi
+
+ssh_exec_and_log "$DST_HOST" "mkdir -p $DST" "Error creating directory $DST"
 
 DOWNLOADER_ARGS=`set_downloader_args "$MD5" "$SHA1" "$NO_DECOMPRESS" "$LIMIT_TRANSFER_BW" "$SRC" "$DST/Image.img"`
-COPY_COMMAND="$UTILS_PATH/downloader.sh $DOWNLOADER_ARGS"
+COPY_COMMAND="$DRIVER_PATH/downloader.sh $DOWNLOADER_ARGS"
+
+logger "Copying ($SRC -> $DST) @ $DST_HOST"
 
 case $SRC in
 http://*|https://*)
@@ -71,5 +87,9 @@ http://*|https://*)
     ssh_exec_and_log "$DST_HOST" "$COPY_COMMAND" "Error copying $SRC to $DST"
     ;;
 esac
-logger "COPY @$DST_HOST :: $SRC -> $DST"
+
+logger "Copy Complete ($SRC -> $DST)"
+
 echo "$DST"
+exit 0
+
