@@ -1,8 +1,9 @@
 <pre>VDC-NEBULA
 ==========
 
-These scripts provide the glue between OpenNebula and vdc-store. More documentation needs to be written
-but essentially this package needs to be cloned into /var/lib/one on your NFS server. So, for example;
+These scripts provide the glue between OpenNebula and vdc-store. More documentation 
+needs to be written but essentially this package needs to be cloned into /var/lib/one
+on your NFS server. So, for example;
 
 cd /var/lib/one
 mkdir vdc-nebula
@@ -34,6 +35,6 @@ DATASTORE_MAD = [
     arguments  = "-t 15 -d dummy,fs,vmfs,iscsi,lvm,ceph,vdc"]
 
 And as far as the glue is concerned, you're good to go.
-- Now you need a couple of patches to substone to give you "vdc" as a datastore type, and a working
-- copy of vdc-server and vdc-store.
+- Now you need a couple of patches to substone to give you "vdc" as a datastore type,
+- and a working copy of vdc-server and vdc-store.
 </PRE>
