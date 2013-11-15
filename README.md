@@ -24,7 +24,8 @@ Make sure you have some sensible permissions set;
 cd /var/lib/one/vdc-nebula
 chown -R oneadmin:oneadmin .
 
-Then edit /etc/one/oned.conf and add "vdc" to your TM and DATASTORE drivers, for example;
+Then edit /etc/one/oned.conf and add "vdc" to your TM and DATASTORE drivers.
+For example;
 
 TM_MAD = [
     executable = "one_tm",
