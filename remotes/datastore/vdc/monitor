@@ -18,26 +18,29 @@ XPATH="${DRIVER_PATH}/xpath.rb -b $DRV_ACTION"
 unset i XPATH_ELEMENTS
 while IFS= read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
-done < <($XPATH     /DS_DRIVER_ACTION_DATA/DATASTORE/TEMPLATE/HOST \
+done < <($XPATH     /DS_DRIVER_ACTION_DATA/DATASTORE/NAME \
                     /DS_DRIVER_ACTION_DATA/DATASTORE/TEMPLATE/VG_NAME)
 
 HOST="${XPATH_ELEMENTS[0]}"
 VG_NAME="${XPATH_ELEMENTS[1]}"
 
-MONITOR_SCRIPT=$(cat <<EOF
-VG_OPTS="--units M -C --noheadings --nosuffix $VG_NAME"
-TOTAL_MB=\$(sudo vgdisplay -o vg_size \$VG_OPTS|tr -d " ")
-FREE_MB=\$(sudo vgdisplay -o vg_free \$VG_OPTS|tr -d " " )
-USED_MB=\$(awk "BEGIN { print \$TOTAL_MB - \$FREE_MB } ")
+if [ -z $VG_NAME ]
+then
+	echo "TOTAL_MB=0 FREE_MB=0 USED_MB=0"
+	exit 0
+fi
 
-echo "TOTAL_MB=\$TOTAL_MB"
-echo "FREE_MB=\$FREE_MB"
-echo "USED_MB=\$USED_MB"
-logger "Free Space (\$TOTAL_MB)"
+MONITOR_SCRIPT=$(cat <<EOF
+VG_OPTS="--units M -C --noheadings --nosuffix $VG_NAME" ;
+TOTAL_MB=\$(sudo vgdisplay -o vg_size \$VG_OPTS|tr -d " " ) ;
+FREE_MB=\$(sudo vgdisplay -o vg_free \$VG_OPTS|tr -d " " ) ;
+USED_MB=\$(awk "BEGIN { print \$TOTAL_MB - \$FREE_MB } ") ;
+echo "TOTAL_MB=\$TOTAL_MB FREE_MB=\$FREE_MB USED_MB=\$USED_MB"
 EOF
 )
 
-MONITOR_DATA=$(ssh_monitor_and_log $HOST "$MONITOR_SCRIPT" 2>&1)
+MONITOR_DATA=$(ssh_monitor_and_log "$HOST" "$MONITOR_SCRIPT")
+
 MONITOR_STATUS=$?
 
 if [ "$MONITOR_STATUS" = "0" ]; then

@@ -22,14 +22,17 @@ db = MySQLdb.connect(host="127.0.0.1",user="root",passwd="",db="opennebula")
 cur = db.cursor(MySQLdb.cursors.DictCursor) 
 cur.execute("FLUSH QUERY CACHE");
 
-def Get(table,key,val,keys):
+def Get(table,key,val,keys,debug):
   """ interrogate the XML """
   cur.execute("SELECT * FROM %s where %s = '%s'" % (table,key,val))
   rows = cur.fetchall()
   if(len(rows)==0): return "none"
   elements = {}
   xmlParse(elements,ET.fromstring(rows[0]['body']))
-  elements = elements['TEMPLATE']
+  #elements = elements['TEMPLATE']
+
+  if debug: print elements
+
   keys = keys.split(",")
   for k in keys:
     if elements.has_key(k):
@@ -40,9 +43,9 @@ def Get(table,key,val,keys):
 
 def do_ln(vmid,dsid,host):
   """ print an environment string for the ln command """
-  print "DS_NAME='%s'"         % Get("datastore_pool","oid",str(dsid),"HOST")
-  print "CACHE_SIZE='%s'"  % Get("vm_pool","oid",str(vmid),"CONTEXT,VDC_CACHE_SIZE")
-  print "CACHE_LVM='%s'"   % Get("host_pool","name",host,"VDC_CACHE_LVM")
+  print "DS_NAME='%s'"     % Get("datastore_pool","oid",str(dsid),"NAME",False)
+  print "CACHE_SIZE='%s'"  % Get("vm_pool","oid",str(vmid),"TEMPLATE,CONTEXT,VDC_CACHE_SIZE",False)
+  print "CACHE_LVM='%s'"   % Get("host_pool","name",host,"TEMPLATE,VDC_CACHE_LVM",False)
   return
 
 def do_add(name,dest,size):
