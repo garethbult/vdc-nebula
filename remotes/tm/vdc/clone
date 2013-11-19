@@ -1,28 +1,26 @@
 #!/bin/bash
-
-# clone fe:SOURCE host:remote_system_ds/disk.i vmid dsid
-#   - fe is the front-end hostname
-#   - SOURCE is the path of the disk image in the form DS_BASE_PATH/disk
-#   - host is the target host to deploy the VM
-#   - remote_system_ds is the path for the system datastore in the host
-#   - vmid is the id of the VM
-#   - dsid is the target datastore (0 is the system datastore)
+# -------------------------------------------------------------------------- #
+# Copyright 2013, Gareth Bult <gareth@linux.co.uk>                           #
+#                                                                            #
+# Licensed under the Apache License, Version 2.0 (the "License"); you may    #
+# not use this file except in compliance with the License. You may obtain    #
+# a copy of the License at                                                   #
+#                                                                            #
+# http://www.apache.org/licenses/LICENSE-2.0                                 #
+#                                                                            #
+# Unless required by applicable law or agreed to in writing, software        #
+# distributed under the License is distributed on an "AS IS" BASIS,          #
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+# See the License for the specific language governing permissions and        #
+# limitations under the License.                                             #
+#--------------------------------------------------------------------------- #
+ROOT=$(dirname $(dirname $(dirname $0)))
+source ${ROOT}/hooks/vdc/common.sh
 
 SRC=$1
 DST=$2
 VMID=$3
 DSID=$4
-
-if [ -z "${ONE_LOCATION}" ]; then
-    TMCOMMON=/var/lib/one/remotes/tm/tm_common.sh
-else
-    TMCOMMON=$ONE_LOCATION/var/remotes/tm/tm_common.sh
-fi
-
-. $TMCOMMON
-
-source ${ONE_LOCAL_VAR}/remotes/datastore/libfs.sh
-logger "${ONE_LOCAL_VAR}/remotes/datastore/libfs.sh"
 
 SRC_PATH=`arg_path $SRC`
 DST_PATH=`arg_path $DST`
@@ -32,17 +30,9 @@ BASE_PATH=`dirname $SRC_PATH`
 DST_DIR=`generate_image_path`
 DST_BASE=`dirname $DST_PATH`
 
-logger "SRC=$SRC"
-logger "SRC_PATH=$SRC_PATH"
-logger "DST=$DST"
-logger "DST_PATH=$DST_PATH"
-logger "BASE_PATH=$BASE_PATH"
-logger "DST_DIR=$DST_DIR"
-logger "DST_BASE=$DST_BASE"
-
-tool="${ONE_LOCAL_VAR}/remotes/hooks/vdc/tool.py"
-conf="${ONE_LOCAL_VAR}/remotes/hooks/vdc/mkconfig.py"
-vdc="/home/gareth/Git/vdc/vdc-client"
+tool="${ROOT}/hooks/vdc/tool.py"
+conf="${ROOT}/hooks/vdc/mkconfig.py"
+vdc="${ROOT}/../vdc-nebula/remotes/binaries"
 vdctool="$vdc/vdc-tool"
 vdcstore="$vdc/vdc-store"
 
@@ -58,26 +48,23 @@ case $SRC in
 http://*)
     log "Downloading $SRC"
     RMT_CMD="$WGET -O $DST_DIR $SRC"
-    ssh_exec_and_log "$DS_NAME" "$RMT_CMD" "Error downloading $SRC"
+    execute $DS_NAME "$RMT_CMD" "Error downloading $SRC"
     ;;
 
 *)
     log "Cloning $SRC in $DST_DIR"
-    ssh_exec_and_log "${DS_NAME}" "cp -r $SRC_PATH/* $DST_DIR/ 2>/tmp/errlog" "Error copying $SRC_PATH to $DST_DIR"
+    execute ${DS_NAME} "cp -r $SRC_PATH/* $DST_DIR/ 2>/tmp/errlog" "Error copying $SRC_PATH to $DST_DIR"
     ;;
 esac
 
+vdc_log "${tool} add ${NAME} ${DST_DIR} 0"
 ${tool} add ${NAME} ${DST_DIR} 0
-ssh_exec_and_log ${DS_NAME} ${conf} "Error Updating VDC Server Config"
-sleep 2
+execute ${DS_NAME} ${conf} "Error Updating VDC Server Config"
+# FIXME: replace the sleep with a signal to/from "vdc-server"
+sleep 3
 
-function execute {
-	logger "@$DST_HOST ${1}" 
-	ssh_exec_and_log ${DST_HOST} "${1}" "${2}"
-}
-
-execute "sudo $vdctool -n $NAME --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
-execute "sudo $vdcstore -n ${NAME}" "Error starting VDC"
-execute "mkdir ${DST_BASE}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
+execute $DST_HOST "sudo $vdctool -n $NAME --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
+execute $DST_HOST "sudo $vdcstore -n ${NAME}" "Error starting VDC"
+execute $DST_HOST "mkdir ${DST_BASE}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
 
 exit 0

@@ -16,14 +16,21 @@
 #--------------------------------------------------------------------------- #
 if [ -z "${ONE_LOCATION}" ]; then
     LIB_LOCATION=/usr/lib/one
+    TMCOMMON=/var/lib/one/remotes/tm/tm_common.sh
 else
     LIB_LOCATION=$ONE_LOCATION/lib
+    TMCOMMON=$ONE_LOCATION/var/remotes/tm/tm_common.sh
 fi
 . $LIB_LOCATION/sh/scripts_common.sh
+. $TMCOMMON
 
-DRIVER_PATH=$(dirname $(dirname $0))
+DRIVER_PATH=${ROOT}/datastore
 source ${DRIVER_PATH}/libfs.sh
-XPATH="${DRIVER_PATH}/xpath.rb -b $1"
+if [ -z ${TEMP} ] ; then
+    XPATH="${DRIVER_PATH}/xpath.rb -b $1"
+else
+    XPATH="${DRIVER_PATH}/xpath.rb -b $TEMP"
+fi
 unset i XPATH_ELEMENTS
 
 function vdc_log {
