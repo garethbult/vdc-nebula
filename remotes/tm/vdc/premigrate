@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 #	Process:
@@ -17,15 +17,25 @@ TEMP=$6
 logger "PREMIGRATE :: ${VMID}"
 
 if [ -z "${ONE_LOCATION}" ]; then
-    TMCOMMON=/var/lib/one/remotes/tm/tm_common.sh
+    LIB_LOCATION=/usr/lib/one
 else
-    TMCOMMON=$ONE_LOCATION/var/remotes/tm/tm_common.sh
+    LIB_LOCATION=$ONE_LOCATION/lib
 fi
 
-. $TMCOMMON
+source $LIB_LOCATION/sh/scripts_common.sh
 
-tool="${ONE_LOCAL_VAR}/remotes/hooks/vdc/tool.py"
-conf="${ONE_LOCAL_VAR}/remotes/hooks/vdc/mkconfig.py"
+DRIVER_PATH=$(dirname $(dirname $(dirname $0)))
+source ${DRIVER_PATH}/datastor/libfs.sh
+XPATH="${DRIVER_PATH}/datastore/xpath.rb -b $TEMP"
+unset i XPATH_ELEMENTS
+while IFS= read -r -d '' element; do
+    XPATH_ELEMENTS[i++]="$element"
+done < <($XPATH  	/VM/TEMPLATE/DISK/DATASTORE_ID)
+
+DSID="${XPATH_ELEMENTS[0]}"
+
+tool="${DRIVER_PATH}/hooks/vdc/tool.py"
+conf="${DRIVER_PATH}/hooks/vdc/mkconfig.py"
 vdc="/home/gareth/Git/vdc/vdc-client"
 NAME="ON_IM_$VMID"
 vdctool="sudo $vdc/vdc-tool -n ${NAME}"
@@ -40,13 +50,13 @@ logger "[[ `${tool} ln $VMID $DSID $DST_HOST` ]]"
 eval `${tool} ln $VMID $DSID $DST_HOST`
 
 ssh_exec_and_log ${DST_HOST} "$vdctool --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
-log "Starting target store on ${DST_HOST}"
+logger "* ${DST_HOST} ${vdcstore} -R"
 ssh_exec_and_log ${DST_HOST} "${vdcstore} -R" "Unable to start cache on $DST_HOST"
 sleep 2
-log "Setting target RW"
-ssh_exec_and_log ${DST_HOST} "${vdctool} --readwrite"
+logger "* exec ${DST_HOST} ${vdctool} --readwrite"
+ssh_exec_and_log ${DST_HOST} "${vdctool} --readwrite" "Unable to set RW mode"
 sleep 2
-log "Running Migrate"
-ssh_exec_and_log ${SRC_HOST} "${vdctool} --migrate ${DST_HOST}"
+logger "* exec ${SRC_HOST} ${vdctool} --migrate ${DST_HOST}"
+ssh_exec_and_log ${SRC_HOST} "${vdctool} --migrate ${DST_HOST}" "Unable to complete cache migrate"
 
 exit 0

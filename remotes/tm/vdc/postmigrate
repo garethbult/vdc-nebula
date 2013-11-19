@@ -10,24 +10,36 @@ TEMP=$6
 logger "POSTMIGRATE :: ${VMID}"
 
 if [ -z "${ONE_LOCATION}" ]; then
-    TMCOMMON=/var/lib/one/remotes/tm/tm_common.sh
+    LIB_LOCATION=/usr/lib/one
 else
-    TMCOMMON=$ONE_LOCATION/var/remotes/tm/tm_common.sh
+    LIB_LOCATION=$ONE_LOCATION/lib
 fi
 
-. $TMCOMMON
+source $LIB_LOCATION/sh/scripts_common.sh
 
-tool="${ONE_LOCAL_VAR}/remotes/hooks/vdc/tool.py"
-conf="${ONE_LOCAL_VAR}/remotes/hooks/vdc/mkconfig.py"
+DRIVER_PATH=$(dirname $(dirname $(dirname $0)))
+source ${DRIVER_PATH}/datastor/libfs.sh
+XPATH="${DRIVER_PATH}/datastore/xpath.rb -b $TEMP"
+unset i XPATH_ELEMENTS
+while IFS= read -r -d '' element; do
+    XPATH_ELEMENTS[i++]="$element"
+done < <($XPATH  	/VM/TEMPLATE/DISK/DATASTORE_ID)
+
+DSID="${XPATH_ELEMENTS[0]}"
+
+tool="${DRIVER_PATH}/hooks/vdc/tool.py"
+conf="${DRIVER_PATH}/hooks/vdc/mkconfig.py"
 vdc="/home/gareth/Git/vdc/vdc-client"
 NAME="ON_IM_$VMID"
 vdctool="sudo $vdc/vdc-tool -n ${NAME}"
 vdcstore="sudo $vdc/vdc-store -n ${NAME}"
 
 log "Running Migrate"
-ssh_exec_and_log ${SRC_HOST} "${vdctool} --stop"
+logger "@${SRC_HOST} ${vdctool} --stop"
+ssh_exec_and_log ${SRC_HOST} "${vdctool} --stop" "Failed to stop source cache"
 sleep 2
 CACHE_PATH="/dev/${CACHE_LVM}"
+logger "@${SRC_HOST}  sudo lvremove -f ${CACHE_PATH}/${NAME}"
 ssh_exec_and_log ${SRC_HOST}  "sudo lvremove -f ${CACHE_PATH}/${NAME}" "Error removing Cache LVM"
 
 exit 0
