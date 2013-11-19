@@ -1,21 +1,22 @@
 #!/bin/bash
+# -------------------------------------------------------------------------- #
+# Copyright 2013, Gareth Bult <gareth@linux.co.uk>                           #
+#                                                                            #
+# Licensed under the Apache License, Version 2.0 (the "License"); you may    #
+# not use this file except in compliance with the License. You may obtain    #
+# a copy of the License at                                                   #
+#                                                                            #
+# http://www.apache.org/licenses/LICENSE-2.0                                 #
+#                                                                            #
+# Unless required by applicable law or agreed to in writing, software        #
+# distributed under the License is distributed on an "AS IS" BASIS,          #
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+# See the License for the specific language governing permissions and        #
+# limitations under the License.                                             #
+#--------------------------------------------------------------------------- #
+ROOT=$(dirname $(dirname $(dirname $0)))
+source ${ROOT}/hooks/vdc/common.sh
 
-DRV_ACTION=$1
-ID=$2
-
-logger "DS MONITOR :: ($ID)"
-
-if [ -z "${ONE_LOCATION}" ]; then
-    LIB_LOCATION=/usr/lib/one
-else
-    LIB_LOCATION=$ONE_LOCATION/lib
-fi
-
-. $LIB_LOCATION/sh/scripts_common.sh 
-DRIVER_PATH=$(dirname $(dirname $0))
-source ${DRIVER_PATH}/libfs.sh
-XPATH="${DRIVER_PATH}/xpath.rb -b $DRV_ACTION"
-unset i XPATH_ELEMENTS
 while IFS= read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
 done < <($XPATH     /DS_DRIVER_ACTION_DATA/DATASTORE/NAME \
@@ -24,8 +25,11 @@ done < <($XPATH     /DS_DRIVER_ACTION_DATA/DATASTORE/NAME \
 HOST="${XPATH_ELEMENTS[0]}"
 VG_NAME="${XPATH_ELEMENTS[1]}"
 
+vdc_log "* running Monitor against '${HOST}' ($2)"
+
 if [ -z $VG_NAME ]
 then
+        vdc_log "* VG_NAME is missing from the config for '${HOST}' ($2)"
 	echo "TOTAL_MB=0 FREE_MB=0 USED_MB=0"
 	exit 0
 fi
@@ -40,14 +44,13 @@ EOF
 )
 
 MONITOR_DATA=$(ssh_monitor_and_log "$HOST" "$MONITOR_SCRIPT")
-
 MONITOR_STATUS=$?
 
 if [ "$MONITOR_STATUS" = "0" ]; then
     echo "$MONITOR_DATA" | tr ' ' '\n'
 else
+    vdc-log "* DS MONITOR Error: ${MONITOR_DATA}"
     echo "$MONITOR_DATA"
     exit $MONITOR_STATUS
 fi
-
 exit 0

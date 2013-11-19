@@ -14,27 +14,23 @@
 # See the License for the specific language governing permissions and        #
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
-ROOT=$(dirname $(dirname $(dirname $0)))
-source ${ROOT}/hooks/vdc/common.sh
-
-while IFS= read -r -d '' element; do
-    XPATH_ELEMENTS[i++]="$element"
-done < <($XPATH     /DS_DRIVER_ACTION_DATA/IMAGE/SOURCE \
-                    /DS_DRIVER_ACTION_DATA/DATASTORE/BASE_PATH \
-                    /DS_DRIVER_ACTION_DATA/DATASTORE/NAME)
-
-SRC="${XPATH_ELEMENTS[0]}"
-BASE_PATH="${XPATH_ELEMENTS[1]}"
-DST_HOST="${XPATH_ELEMENTS[2]}"
-
-BASENAME_SRC=`basename "${SRC##$BASE_PATH}"`
-
-if [ `dirname "$SRC"` = "$BASE_PATH" -a -n "$BASENAME_SRC" ]
-then
-    log "Removing $SRC from the image repository"
-    execute $DST_HOST "rm -rf $SRC" "Error deleting $SRC"
+if [ -z "${ONE_LOCATION}" ]; then
+    LIB_LOCATION=/usr/lib/one
 else
-    vdc_log "* Error: unable to mark $SRC for deletion"
-    exit 1
+    LIB_LOCATION=$ONE_LOCATION/lib
 fi
-exit 0
+. $LIB_LOCATION/sh/scripts_common.sh
+
+DRIVER_PATH=$(dirname $(dirname $0))
+source ${DRIVER_PATH}/libfs.sh
+XPATH="${DRIVER_PATH}/xpath.rb -b $1"
+unset i XPATH_ELEMENTS
+
+function vdc_log {
+    logger -t vdc-nebula "$1"
+}
+
+function execute {
+        vdc_log "* exec @$1 $2"
+        ssh_exec_and_log "$1" "$2" "$3"
+}
