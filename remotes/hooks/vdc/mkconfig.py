@@ -4,13 +4,40 @@ import MySQLdb
 import xml.etree.ElementTree as ET
 import os
 import sys
+import time
+import fcntl
 from syslog import syslog,LOG_INFO
 from time import sleep
 
+CONFIG_FILE = "/etc/vdc/config"
 VDC_NAMES = []
-
-syslog(LOG_INFO,"## VDC mkconfig is regenerating the config file")
 hostname = os.uname()[1]
+
+def LockFile(file):
+  """ add an advisory lock to a file """
+  try:
+    fcntl.flock(file.fileno(),fcntl.LOCK_EX)
+    return True
+  except:
+    syslog(LOG_INFO,"* mkconfig :: ERROR locking config file")
+    return False
+
+def UnlockFile(file):
+  """ remove an advisory lock from a file """
+  fcntl.flock(file.fileno(),fcntl.LOCK_UN)
+
+dst = open(CONFIG_FILE,"w")
+if not dst:
+    syslog(LOG_INFO,"* mkconfig ERROR :: config file [%s] is missing" % CONFIG_FILE)
+    sys.exit(1)
+
+syslog(LOG_INFO,"* mkconfig :: Waiting on config file")
+while True:
+  if LockFile(dst): break
+  time.sleep(1)
+
+syslog(LOG_INFO,"* mkconfig :: Processing ...")
+dst.truncate()
 
 def xmlParse(elements,xml):
   """ parse an XML blob into a hierarchical map """
@@ -32,10 +59,6 @@ for row in cur.fetchall():
   if elements['DS_MAD'] == 'vdc': VDC_NAMES.append(elements['NAME'])
 
 cur.execute("SELECT * FROM vm_pool WHERE state <> 6");
-
-dst = open("/etc/vdc/config","w")
-if not dst: sys.exit(1)
-dst.truncate()
 
 dst.write("#\n# VDC Config file\n")
 dst.write("# AUTO-GENERATED - DO NOT EDIT!\n#\n")
@@ -82,5 +105,7 @@ for row in cur.fetchall():
         dst.write("  size = " + size + "\n")
         dst.write("  proto = lsfs\n\n")
 	
+syslog(LOG_INFO,"* mkconfig :: Unlocking ...")
+UnlockFile(dst)
 dst.close()
 sys.exit(0)
