@@ -18,6 +18,12 @@ cd /var/lib/one/remotes/tm
 ln -s ../../vdc-nebula/remotes/tm/vdc
 cd /var/lib/one/remotes/hooks
 ln -s ../../vdc-nebula/remotes/hooks/vdc
+#
+# This bit is to fix the <sharable> attribute for live migration
+#
+cd /var/lib/one/remotes/vmm/kvm 
+mv deploy deploy.old
+ln -s /var/lib/one/vdc-nebula/remotes/misc/deploy
 
 Make sure you have some sensible permissions set;
 
