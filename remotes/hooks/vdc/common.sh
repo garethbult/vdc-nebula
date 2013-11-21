@@ -41,3 +41,20 @@ function execute {
         vdc_log "* exec @$1 $2"
         ssh_exec_and_log "$1" "$2" "$3"
 }
+
+function vdc_image_hash {
+    echo "`date +%s%N|md5sum|cut -d" " -f1`"
+}
+
+function vdc_make_path
+{
+    SSH_EXEC_ERR=`$SSH $1 sh -s 2>&1 1>/dev/null <<EOF
+    mkdir $2
+EOF`
+    SSH_EXEC_RC=$?
+
+    if [ $? -ne 0 ]; then
+        error_message "Error creating directory $2 at $1: $SSH_EXEC_ERR"
+        exit $SSH_EXEC_RC
+    fi
+}

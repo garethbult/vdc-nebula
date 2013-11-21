@@ -27,22 +27,29 @@ DST_PATH=`arg_path $DST`
 DST_HOST=`arg_host $DST`
 DST_DIR=`dirname $DST_PATH`
 BASE_PATH=`dirname $SRC_PATH`
-DST_DIR=`generate_image_path`
+#DST_DIR=`generate_image_path`
+DST_DIR="${BASE_PATH}/`vdc_image_hash`"
 DST_BASE=`dirname $DST_PATH`
 
-tool="${ROOT}/hooks/vdc/tool.py"
-conf="${ROOT}/hooks/vdc/mkconfig.py"
-vdc="${ROOT}/../vdc-nebula/remotes/binaries"
-vdctool="$vdc/vdc-tool"
-vdcstore="$vdc/vdc-store"
+vdc_log "Running CLONE with DST_DIR=${DST_DIR}"
+#FIXME :: check destination does not exist!
 
 NAME="ON_IM_$VMID"
 CACHE_SIZE="none"
 CACHE_LVM="none"
 DS_NAME="none"
 
+tool="${ROOT}/hooks/vdc/tool.py"
+conf="${ROOT}/hooks/vdc/mkconfig.py"
+vdc="${ROOT}/../vdc-nebula/remotes/binaries"
+vdctool="sudo $vdc/vdc-tool -n $NAME "
+vdcstore="sudo $vdc/vdc-store -n $NAME "
+
+
 eval `${tool} ln $VMID $DSID $DST_HOST`
-ssh_make_path $DS_NAME $DST_DIR
+
+ssh_make_path $DS_NAME $BASE_PATH
+vdc_make_path $DS_NAME $DST_DIR
 
 case $SRC in
 http://*)
@@ -63,8 +70,8 @@ execute ${DS_NAME} ${conf} "Error Updating VDC Server Config"
 # FIXME: replace the sleep with a signal to/from "vdc-server"
 sleep 3
 
-execute $DST_HOST "sudo $vdctool -n $NAME --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
-execute $DST_HOST "sudo $vdcstore -n ${NAME}" "Error starting VDC"
+execute $DST_HOST "$vdctool --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
+execute $DST_HOST "$vdcstore" "Error starting VDC"
 execute $DST_HOST "mkdir ${DST_BASE}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
-
+execute $DST_HOST "$vdctool --wait STARTED" "Failed waiting on vdc-start"
 exit 0

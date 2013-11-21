@@ -26,7 +26,9 @@ done < <($XPATH     /DS_DRIVER_ACTION_DATA/DATASTORE/BASE_PATH \
 BASE_PATH="${XPATH_ELEMENTS[0]}"
 SRC="${XPATH_ELEMENTS[1]}"
 DST_HOST="${XPATH_ELEMENTS[2]:-$HOST}"
+ID=$2
 
+vdc_log "Running CLONE with ID=$ID"
 set_up_datastore "$BASE_PATH" "$RESTRICTED_DIRS" "$SAFE_DIRS"
 DST=`generate_image_path`
 execute $DST_HOST "sudo chown -R oneadmin:oneadmin $SRC"

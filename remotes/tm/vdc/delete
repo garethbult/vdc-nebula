@@ -46,7 +46,7 @@ then
         execute $DS_NAME "sudo rm -f  ${IM_PATH}/Image.img" "Error removing main image"
         execute $DS_NAME "sudo rmdir ${IM_PATH}" "Error removing directory"
 else
-	logger "IM_PATH was not set"
+        vdc_log "IM_PATH was not set"
 fi
 
 CACHE_PATH="/dev/${CACHE_LVM}"
