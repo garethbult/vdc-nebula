@@ -35,7 +35,7 @@ DATASTORE_MAD = [
     executable = "one_datastore",
     arguments  = "-t 15 -d dummy,fs,vmfs,iscsi,lvm,ceph,vdc"]
 
-And as far as the glue is concerned, you're good to go.
-- Now you need a couple of patches to substone to give you "vdc" as a datastore type,
-- and a working copy of vdc-server and vdc-store.
+I will be adding some examples and documentation shortly, and hopefully some custom images.
+In the meantime the binaries section contains the current version of the cache, server and
+management tool - all of which are called directly by the OpenNebula scripts.
 </PRE>
