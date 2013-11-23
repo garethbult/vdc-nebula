@@ -46,9 +46,14 @@ vdc_log "`${tool} ln $VMID $DSID $DST_HOST`"
 eval `${tool} ln $VMID $DSID $DST_HOST`
 
 execute ${DST_HOST} "$vdctool --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
-execute ${DST_HOST} "${vdcstore} -R" "Unable to start cache on $DST_HOST"
+execute ${DST_HOST} "${vdcstore}" "Unable to start cache on $DST_HOST"
+#vdc_log "${DST_HOST}@${vdcstore} -R"
 execute ${DST_HOST} "${vdctool} --wait STARTED" "Failed waiting on vdc-start"
-execute ${DST_HOST} "${vdctool} --readwrite" "Unable to set RW mode"
+#execute ${DST_HOST} "${vdctool} --readwrite" "Unable to set RW mode"
 execute ${SRC_HOST} "${vdctool} --migrate ${DST_HOST}" "Unable to complete cache migrate"
 execute ${SRC_HOST} "${vdctool} --wait MIGRATE" "Failed waiting on vdc-migrate"
+#sleep 1
+#execute ${DST_HOST} "${vdctool} --wait STARTED" "Failed waiting on vdc-start"
+#sleep 1
+#execute ${DST_HOST} "${vdctool} --wait STARTED" "Failed waiting on vdc-start"
 exit 0

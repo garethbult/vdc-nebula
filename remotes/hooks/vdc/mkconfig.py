@@ -26,19 +26,6 @@ def UnlockFile(file):
   """ remove an advisory lock from a file """
   fcntl.flock(file.fileno(),fcntl.LOCK_UN)
 
-dst = open(CONFIG_FILE,"w")
-if not dst:
-    syslog(LOG_INFO,"* mkconfig ERROR :: config file [%s] is missing" % CONFIG_FILE)
-    sys.exit(1)
-
-syslog(LOG_INFO,"* mkconfig :: Waiting on config file")
-while True:
-  if LockFile(dst): break
-  time.sleep(1)
-
-syslog(LOG_INFO,"* mkconfig :: Processing ...")
-dst.truncate()
-
 def xmlParse(elements,xml):
   """ parse an XML blob into a hierarchical map """
   for elem in xml:
@@ -59,6 +46,20 @@ for row in cur.fetchall():
   if elements['DS_MAD'] == 'vdc': VDC_NAMES.append(elements['NAME'])
 
 cur.execute("SELECT * FROM vm_pool WHERE state <> 6");
+pools = cur.fetchall()
+
+dst = open(CONFIG_FILE,"w")
+if not dst:
+    syslog(LOG_INFO,"* mkconfig ERROR :: config file [%s] is missing" % CONFIG_FILE)
+    sys.exit(1)
+
+syslog(LOG_INFO,"* mkconfig :: Waiting on config file")
+while True:
+  if LockFile(dst): break
+  time.sleep(1)
+
+syslog(LOG_INFO,"* mkconfig :: Processing ...")
+dst.truncate()
 
 dst.write("#\n# VDC Config file\n")
 dst.write("# AUTO-GENERATED - DO NOT EDIT!\n#\n")
@@ -67,7 +68,7 @@ dst.write("  proto = lsfs\n")
 dst.write("  path = /var/lib/one/images\n")
 dst.write("  size = 10G\n\n")
 
-for row in cur.fetchall():
+for row in pools:
   elements = {}
   xmlParse(elements,ET.fromstring(row['body']))
   IMAGE_ID = elements['TEMPLATE']['DISK']['IMAGE_ID']
