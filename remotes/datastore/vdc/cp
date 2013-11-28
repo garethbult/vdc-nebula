@@ -58,6 +58,8 @@ fi
 execute $DST_HOST "mkdir -p $DST" "Error creating directory $DST"
 
 DOWNLOADER_ARGS=`set_downloader_args "$MD5" "$SHA1" "$NO_DECOMPRESS" "$LIMIT_TRANSFER_BW" "$SRC" "$DST/Image.img"`
+DRIVER_PATH=$(dirname $0)
+vdc_log "$DRIVER_PATH/downloader.sh $DOWNLOADER_ARGS"
 COPY_COMMAND="$DRIVER_PATH/downloader.sh $DOWNLOADER_ARGS"
 
 vdc_log "* copying from {$SRC} to {$DST} on host {$DST_HOST}"

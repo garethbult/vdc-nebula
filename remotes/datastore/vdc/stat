@@ -20,10 +20,32 @@ vdc_log "DS STAT :: ID=$2"
 
 while IFS= read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
-done < <($XPATH /DS_DRIVER_ACTION_DATA/IMAGE/PATH)
+done < <($XPATH /DS_DRIVER_ACTION_DATA/IMAGE/PATH \
+                /DS_DRIVER_ACTION_DATA/DATASTORE/NAME)
+
 SRC="${XPATH_ELEMENTS[0]}"
-vdc_log "* executing -> blockdev --getsz $SRC"
-siz=`blockdev --getsz $SRC`
+DST="${XPATH_ELEMENTS[1]}"
+
+vdc_log "* executing -> fs_size $SRC"
+
+function file_size {
+  stat --version &> /dev/null
+  if [ $? = 0 ]; then
+      # Linux
+      STAT_CMD="stat -c %s"
+  else
+      # Darwin
+      STAT_CMD="stat -f %z"
+  fi
+  logger -t vdc-nebula '$STAT_CMD "$*"'
+  ssh_exec_and_log $1 '$STAT_CMD "$2"' "Error calling function to calculate size"
+}
+
+#siz=`blockdev --getsz $SRC`
+
+siz=`fs_size $SRC`
 vdc_log "* device size -> $siz"
-expr $siz \/ 2 \/ 1024
+echo $siz
+
+#expr $siz \/ 2 \/ 1024
 exit 0

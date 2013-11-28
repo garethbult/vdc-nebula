@@ -31,7 +31,12 @@ DS_NAME="none"
 
 tool="${ROOT}/hooks/vdc/tool.py"
 conf="${ROOT}/hooks/vdc/mkconfig.py"
+gids="${ROOT}/hooks/vdc/get_image_ids.py"
 vdc="${ROOT}/../vdc-nebula/remotes/binaries"
+
+eval `${gids} $VMID`
+vdc_log "Premigrate with NAME=${NAME}"
+
 vdctool="sudo $vdc/vdc-tool -n ${NAME} "
 vdcstore="sudo $vdc/vdc-store -n ${NAME} "
 

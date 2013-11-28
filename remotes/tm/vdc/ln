@@ -24,11 +24,18 @@ DSID=$4
 
 tool="${ROOT}/hooks/vdc/tool.py"
 conf="${ROOT}/hooks/vdc/mkconfig.py"
+gids="${ROOT}/hooks/vdc/get_image_ids.py"
 vdc="${ROOT}/../vdc-nebula/remotes/binaries"
 vdctool="$vdc/vdc-tool"
 vdcstore="$vdc/vdc-store"
 
-NAME="ON_IM_$VMID"
+#NAME="ON_IM_$VMID"
+
+eval `${gids} $VMID`
+
+vdc_log "Set NAME to $NAME for $VMID"
+vdc_log `${gids} $VMID`
+
 CACHE_SIZE="none"
 CACHE_LVM="none"
 DS_NAME="none"

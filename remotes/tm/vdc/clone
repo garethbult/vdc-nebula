@@ -31,22 +31,29 @@ BASE_PATH=`dirname $SRC_PATH`
 DST_DIR="${BASE_PATH}/`vdc_image_hash`"
 DST_BASE=`dirname $DST_PATH`
 
-vdc_log "Running CLONE with DST_DIR=${DST_DIR}"
 #FIXME :: check destination does not exist!
 
-NAME="ON_IM_$VMID"
+#NAME="ON_IM_$VMID"
 CACHE_SIZE="none"
 CACHE_LVM="none"
 DS_NAME="none"
 
 tool="${ROOT}/hooks/vdc/tool.py"
 conf="${ROOT}/hooks/vdc/mkconfig.py"
+gids="${ROOT}/hooks/vdc/get_image_ids.py"
 vdc="${ROOT}/../vdc-nebula/remotes/binaries"
+
+eval `${gids} $VMID`
+vdc_log "Running CLONE with DST_DIR=${DST_DIR} VMID=$VMID DSID=$DSID SRC=$1 DST=$2 NAME=$NAME"
+
 vdctool="sudo $vdc/vdc-tool -n $NAME "
 vdcstore="sudo $vdc/vdc-store -n $NAME "
 
 
 eval `${tool} ln $VMID $DSID $DST_HOST`
+
+vdc_log "${tool} add ${NAME} ${DST_DIR} 0"
+${tool} add ${NAME} ${DST_DIR} 0
 
 ssh_make_path $DS_NAME $BASE_PATH
 vdc_make_path $DS_NAME $DST_DIR
@@ -60,12 +67,10 @@ http://*)
 
 *)
     log "Cloning $SRC in $DST_DIR"
-    execute ${DS_NAME} "cp -r $SRC_PATH/* $DST_DIR/ 2>/tmp/errlog" "Error copying $SRC_PATH to $DST_DIR"
+    execute ${DS_NAME} "sudo cp -r $SRC_PATH/* $DST_DIR/ 2>/tmp/errlog" "Error copying $SRC_PATH to $DST_DIR"
     ;;
 esac
 
-vdc_log "${tool} add ${NAME} ${DST_DIR} 0"
-${tool} add ${NAME} ${DST_DIR} 0
 execute ${DS_NAME} ${conf} "Error Updating VDC Server Config"
 # FIXME: replace the sleep with a signal to/from "vdc-server"
 sleep 3
