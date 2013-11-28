@@ -1,5 +1,6 @@
-You can now find the Installation documentation on http://www.vdc-store.com.
+You can now find the Installation documentation on <a href="http://www.vdc-store.com">http://www.vdc-store.com</a>.
 
+<pre>
 Changes
 =======
 
@@ -8,3 +9,5 @@ Changes
               (by default, sparseness is lost on download)
 28 Nov 2013 - Ubuntu Server image (10G) is now available via Marketplace
               (download size is ~ 600M)
+
+</pre>
