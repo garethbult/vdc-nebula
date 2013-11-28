@@ -31,7 +31,7 @@ cur.execute("FLUSH QUERY CACHE");
 
 output=""
 vmid=int(sys.argv[1])
-cur.execute("SELECT * FROM vm_pool WHERE state <> 6")
+cur.execute("SELECT * FROM vm_pool")
 rows = cur.fetchall()
 for row in rows:
   oid=int(row['oid'])
