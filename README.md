@@ -1,6 +1,6 @@
 You can now find the Installation documentation on <a href="http://www.vdc-store.com">http://www.vdc-store.com</a>.
 
-Please note this software is BETA.
+Please note this software is BETA.<br/>
 Do NOT put your live data on it, use it for TESTING ONLY.
 
 <pre>
