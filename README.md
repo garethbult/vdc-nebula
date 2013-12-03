@@ -7,6 +7,8 @@ Do NOT put your live data on it, use it for TESTING ONLY.
 Changes
 =======
 
+03 Dec 2013 - Lots of small changes to cope with launching lots of VM's
+              at the same time - mostly to do with timeouts and locks
 03 Dec 2013 - Fixed to the server, please restart vdc-server after downloading!
 28 Nov 2013 - Changes to the naming context of Cache images
 28 Nov 2013 - Modified downloader to retain sparse files

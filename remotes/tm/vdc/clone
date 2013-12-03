@@ -47,8 +47,7 @@ eval `${gids} $VMID`
 vdc_log "Running CLONE with DST_DIR=${DST_DIR} VMID=$VMID DSID=$DSID SRC=$1 DST=$2 NAME=$NAME"
 
 vdctool="sudo $vdc/vdc-tool -n $NAME "
-vdcstore="sudo $vdc/vdc-store -n $NAME "
-
+vdcstore="sudo /bin/bash -c 'ulimit -c unlimited && exec $vdc/vdc-store -n $NAME'"
 
 eval `${tool} ln $VMID $DSID $DST_HOST`
 
@@ -73,8 +72,7 @@ esac
 
 execute ${DS_NAME} ${conf} "Error Updating VDC Server Config"
 # FIXME: replace the sleep with a signal to/from "vdc-server"
-sleep 3
-
+# sleep 3
 execute $DST_HOST "$vdctool --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
 execute $DST_HOST "$vdcstore" "Error starting VDC"
 execute $DST_HOST "mkdir ${DST_BASE}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"

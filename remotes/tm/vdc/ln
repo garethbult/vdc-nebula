@@ -36,6 +36,8 @@ eval `${gids} $VMID`
 vdc_log "Set NAME to $NAME for $VMID"
 vdc_log `${gids} $VMID`
 
+vdcstore="sudo /bin/bash -c 'ulimit -c unlimited && exec $vdc/vdc-store -n $NAME'"
+
 CACHE_SIZE="none"
 CACHE_LVM="none"
 DS_NAME="none"
@@ -56,10 +58,12 @@ vdc_log "${tool} ln $VMID $DSID $DST_HOST"
 vdc_log "[`${tool} ln $VMID $DSID $DST_HOST`]"
 eval `${tool} ln $VMID $DSID $DST_HOST`
 
+ulimit -c unlimited
 execute ${DS_NAME} ${conf} "Error Updating VDC Server Config"
 sleep 2
 execute $DST_HOST "sudo $vdctool -n  ${NAME} --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
-execute $DST_HOST "sudo $vdcstore -n ${NAME}" "Error starting VDC"
+#execute $DST_HOST "sudo $vdcstore -n ${NAME}" "Error starting VDC"
+execute $DST_HOST "$vdcstore" "Error starting VDC"
 execute $DST_HOST "sudo $vdctool  -n ${NAME} --wait STARTED" "Failed waiting on vdc-start"
 execute $DST_HOST "cd ${DST_DIR}; rm -f ${DST_PATH}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
 

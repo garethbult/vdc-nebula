@@ -9,7 +9,9 @@ import fcntl
 from syslog import syslog,LOG_INFO
 from time import sleep
 
-CONFIG_FILE = "/etc/vdc/config"
+CONFIG_FILE = "/etc/vdc/config.new"
+CONFIG_LIVE = "/etc/vdc/config"
+CONFIG_LOCK = "/etc/vdc/config.lock"
 #CONFIG_FILE = "config.temp"
 VDC_NAMES = []
 hostname = os.uname()[1]
@@ -77,21 +79,28 @@ if( len(rows) <> 1 ):
   sys.exit(1)
 
 oid = int(rows[0]['oid'])
+
+syslog(LOG_INFO,"* mkconfig :: ++++")
+syslog(LOG_INFO,"* mkconfig :: Acquiring configuration file")
 while True:
 
-  dst = open(CONFIG_FILE,"w")
-  if not dst:
-    syslog(LOG_INFO,"* mkconfig ERROR :: config file [%s] is missing" % CONFIG_FILE)
+  lck = open(CONFIG_LOCK,"w")
+  if not lck:
+    syslog(LOG_INFO,"* mkconfig :: config file [%s] is missing" % CONFIG_LOCK)
     sys.exit(1)
 
-  syslog(LOG_INFO,"* mkconfig :: Waiting on config file")
-  if LockFile(dst): break
-  close(dst)
+  syslog(LOG_INFO,"* mkconfig :: Acquiring configuration lock")
+  if LockFile(lck): break
+  close(lck)
   time.sleep(1)
 
-syslog(LOG_INFO,"* mkconfig :: Processing ...")
-dst.truncate()
+syslog(LOG_INFO,"* mkconfig :: Opening new target")
+dst = open(CONFIG_FILE,"w")
+if not dst:
+  syslog(LOG_INFO,"* mkconfig :: config file [%s] is missing" % CONFIG_FILE)
+  sys.exit(1)
 
+dst.truncate()
 dst.write("#\n# VDC Config file\n")
 dst.write("# AUTO-GENERATED - DO NOT EDIT!\n#\n")
 dst.write("[global]\n  host = "+hostname+"\n")
@@ -131,7 +140,34 @@ for row in cur.fetchall():
       path = row['path']
     dst.write("  path = %s\n" % path)
 
-syslog(LOG_INFO,"* mkconfig :: Unlocking ...")
+dst.close()
+syslog(LOG_INFO,"* mkconfig :: Target generation complete")
+
+while True:
+
+  syslog(LOG_INFO,"* mkconfig :: Acquiring live configuration file")
+  dst = open(CONFIG_LIVE,"w")
+  if not dst:
+    syslog(LOG_INFO,"* mkconfig :: config file [%s] is missing" % CONFIG_FILE)
+    sys.exit(1)
+
+  syslog(LOG_INFO,"* mkconfig :: Acquiring live lock [contend with server]")
+  if LockFile(dst): break
+  close(dst)
+  time.sleep(1)
+
+try:
+  syslog(LOG_INFO,"* mkconfig :: Renaming (new->live)")
+  os.rename(CONFIG_FILE,CONFIG_LIVE)
+  syslog(LOG_INFO,"* mkconfig :: Success ...")
+except IOError as e:
+  syslog(LOG_INFO,"* CRITICAL :: Error installing new config [err=%d]" % e.errno)
+
+syslog(LOG_INFO,"* mkconfig :: Releasing live lock")
 UnlockFile(dst)
 dst.close()
+syslog(LOG_INFO,"* mkconfig :: Releasing config lock")
+UnlockFile(lck)
+lck.close()
+syslog(LOG_INFO,"* mkconfig :: ++++")
 sys.exit(0)
