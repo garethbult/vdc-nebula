@@ -183,11 +183,10 @@ http://*|https://*)
     ;;
 esac
 
+##
 file_type=$(get_type "$command")
 decompressor=$(get_decompressor "$file_type")
-
-#$command | tee >( decompress "$decompressor" "$TO" ) \
-#    >( hasher $HASH_TYPE ) >/dev/null
+logger "Decompressor is: $decompressor"
 
 dir=$(dirname ${TO})
 cd $dir
@@ -198,8 +197,19 @@ $command > "${TO}.bz2"
 logger "cat ${TO}.bz2 | hasher $HASH_TYPE"
 cat "${TO}.bz2" | hasher $HASH_TYPE
 
-logger "Running command: tar xSjf ${TO}.bz2"
-tar xSjf "${TO}.bz2" && rm "${TO}.bz2"
+case "$file_type" in
+	"application/x-gzip")
+                logger "Running command: tar xSzf ${TO}.bz2"
+                tar xSzf "${TO}.bz2" && rm "${TO}.bz2"
+        	;;
+	"application/x-bzip2")
+                logger "Running command: tar xSjf ${TO}.bz2"
+                tar xSjf "${TO}.bz2" && rm "${TO}.bz2"
+	        ;;
+    *)		logger "Running command: mv ${TO} ${DST}"
+		mv ${TO} ${DST}
+        	;;
+esac
 
 if [ "$?" != "0" ]; then
     echo "Error copying" >&2
