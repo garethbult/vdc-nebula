@@ -4,6 +4,7 @@ You can now find the Installation documentation on <a href="http://www.vdc-store
 Changes
 =======
 
+03 Dec 2013 - Fixed to the server, please restart vdc-server after downloading!
 28 Nov 2013 - Changes to the naming context of Cache images
 28 Nov 2013 - Modified downloader to retain sparse files
               (by default, sparseness is lost on download)
