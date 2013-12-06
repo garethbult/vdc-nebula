@@ -131,7 +131,7 @@ for row in cur.fetchall():
       cur.execute("SELECT * FROM vdc WHERE name = '"+name+"'")
       rows = cur.fetchall()
       if not len(rows):
-        sleep(2)
+        # sleep(2)
         cur.execute("SELECT * FROM vdc WHERE name = '"+name+"'")
         rows = cur.fetchall()
         # FIXME :: THIS is a timing issue, needs a better fix
@@ -146,7 +146,7 @@ syslog(LOG_INFO,"* mkconfig :: Target generation complete")
 while True:
 
   syslog(LOG_INFO,"* mkconfig :: Acquiring live configuration file")
-  dst = open(CONFIG_LIVE,"w")
+  dst = open(CONFIG_LIVE,"r")
   if not dst:
     syslog(LOG_INFO,"* mkconfig :: config file [%s] is missing" % CONFIG_FILE)
     sys.exit(1)

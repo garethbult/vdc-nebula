@@ -15,7 +15,8 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 ROOT=$(dirname $(dirname $(dirname $0)))
-source ${ROOT}/hooks/vdc/common.sh
+#source ${ROOT}/hooks/vdc/common.sh
+source /var/lib/one/remotes/hooks/vdc/common.sh
 
 while IFS= read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
@@ -24,8 +25,6 @@ done < <($XPATH     /DS_DRIVER_ACTION_DATA/DATASTORE/NAME \
 
 HOST="${XPATH_ELEMENTS[0]}"
 VG_NAME="${XPATH_ELEMENTS[1]}"
-
-vdc_log "* running Monitor against '${HOST}' ($2)"
 
 if [ -z $VG_NAME ]
 then
@@ -47,10 +46,8 @@ MONITOR_DATA=$(ssh_monitor_and_log "$HOST" "$MONITOR_SCRIPT")
 MONITOR_STATUS=$?
 
 if [ "$MONITOR_STATUS" = "0" ]; then
-    echo "$MONITOR_DATA" | tr ' ' '\n'
+    echo "$MONITOR_DATA" | tr " " "\n"
 else
-    vdc-log "* DS MONITOR Error: ${MONITOR_DATA}"
+    vdc_log "* DS MONITOR Error: ${MONITOR_DATA}"
     echo "$MONITOR_DATA"
-    exit $MONITOR_STATUS
 fi
-exit 0

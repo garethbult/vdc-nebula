@@ -24,7 +24,7 @@ TEMP=$6
 ROOT=$(dirname $(dirname $(dirname $0)))
 source ${ROOT}/hooks/vdc/common.sh
 
-NAME="ON_IM_$VMID"
+#NAME="ON_IM_$VMID"
 CACHE_SIZE="none"
 CACHE_LVM="none"
 DS_NAME="none"

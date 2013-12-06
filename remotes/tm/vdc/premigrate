@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and        #
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
+logger -t vdc-nebula "* Running pre-migrate ..."
 SRC_HOST=$1
 DST_HOST=$2
 DIR_HOST=$3
@@ -55,5 +56,5 @@ execute ${DST_HOST} "$vdctool --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}
 execute ${DST_HOST} "${vdcstore}" "Unable to start cache on $DST_HOST"
 execute ${DST_HOST} "${vdctool} --wait STARTED" "Failed waiting on vdc-start"
 execute ${SRC_HOST} "${vdctool} --migrate ${DST_HOST}" "Unable to complete cache migrate"
-execute ${SRC_HOST} "${vdctool} --wait MIGRATE" "Failed waiting on vdc-migrate"
+#execute ${SRC_HOST} "${vdctool} --wait MIGRATE" "Failed waiting on vdc-migrate"
 exit 0

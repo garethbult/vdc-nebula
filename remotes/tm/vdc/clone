@@ -5,7 +5,7 @@
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
 # a copy of the License at                                                   #
-#                                                                            #
+#                                                                             #
 # http://www.apache.org/licenses/LICENSE-2.0                                 #
 #                                                                            #
 # Unless required by applicable law or agreed to in writing, software        #
@@ -27,13 +27,9 @@ DST_PATH=`arg_path $DST`
 DST_HOST=`arg_host $DST`
 DST_DIR=`dirname $DST_PATH`
 BASE_PATH=`dirname $SRC_PATH`
-#DST_DIR=`generate_image_path`
 DST_DIR="${BASE_PATH}/`vdc_image_hash`"
 DST_BASE=`dirname $DST_PATH`
 
-#FIXME :: check destination does not exist!
-
-#NAME="ON_IM_$VMID"
 CACHE_SIZE="none"
 CACHE_LVM="none"
 DS_NAME="none"
@@ -71,9 +67,7 @@ http://*)
 esac
 
 execute ${DS_NAME} ${conf} "Error Updating VDC Server Config"
-# FIXME: replace the sleep with a signal to/from "vdc-server"
-# sleep 3
-execute $DST_HOST "$vdctool --create -c${CACHE_SIZE} --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
+execute $DST_HOST "$vdctool --create -c${CACHE_SIZE} --nonpersist --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
 execute $DST_HOST "$vdcstore" "Error starting VDC"
 execute $DST_HOST "mkdir ${DST_BASE}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
 execute $DST_HOST "$vdctool --wait STARTED" "Failed waiting on vdc-start"
