@@ -14,19 +14,23 @@
 # See the License for the specific language governing permissions and        #
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
+#
+#   07 Dec 2013 - modified to use 'du' rather than vgdisplay
+#
 ROOT=$(dirname $(dirname $(dirname $0)))
-#source ${ROOT}/hooks/vdc/common.sh
 source /var/lib/one/remotes/hooks/vdc/common.sh
 
 while IFS= read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
 done < <($XPATH     /DS_DRIVER_ACTION_DATA/DATASTORE/NAME \
-                    /DS_DRIVER_ACTION_DATA/DATASTORE/TEMPLATE/VG_NAME)
+                    /DS_DRIVER_ACTION_DATA/DATASTORE/TEMPLATE/VG_NAME\
+                    /DS_DRIVER_ACTION_DATA/DATASTORE/TEMPLATE/MOUNTPOINT)
 
 HOST="${XPATH_ELEMENTS[0]}"
 VG_NAME="${XPATH_ELEMENTS[1]}"
+MOUNT="${XPATH_ELEMENTS[2]}"
 
-if [ -z $VG_NAME ]
+if [ -z $MOUNT ]
 then
         vdc_log "* VG_NAME is missing from the config for '${HOST}' ($2)"
 	echo "TOTAL_MB=0 FREE_MB=0 USED_MB=0"
@@ -34,20 +38,24 @@ then
 fi
 
 MONITOR_SCRIPT=$(cat <<EOF
-VG_OPTS="--units M -C --noheadings --nosuffix $VG_NAME" ;
-TOTAL_MB=\$(sudo vgdisplay -o vg_size \$VG_OPTS|tr -d " " ) ;
-FREE_MB=\$(sudo vgdisplay -o vg_free \$VG_OPTS|tr -d " " ) ;
-USED_MB=\$(awk "BEGIN { print \$TOTAL_MB - \$FREE_MB } ") ;
-echo "TOTAL_MB=\$TOTAL_MB FREE_MB=\$FREE_MB USED_MB=\$USED_MB"
+USED_MB=\`du -sLm $MOUNT 2>/dev/null | cut -f1\`
+TOTAL_MB=\`df -B1M -P $MOUNT 2>/dev/null | tail -n 1 | awk '{print \$2}'\`
+FREE_MB=\`df -B1M -P $MOUNT 2>/dev/null | tail -n 1 | awk '{print \$4}'\`
+echo USED_MB=\${USED_MB:-0}
+echo TOTAL_MB=\${TOTAL_MB:-0}
+echo FREE_MB=\${FREE_MB:-0}
 EOF
 )
 
-MONITOR_DATA=$(ssh_monitor_and_log "$HOST" "$MONITOR_SCRIPT")
+MONITOR_DATA=$(ssh_monitor_and_log $HOST "$MONITOR_SCRIPT" 2>&1)
 MONITOR_STATUS=$?
 
 if [ "$MONITOR_STATUS" = "0" ]; then
-    echo "$MONITOR_DATA" | tr " " "\n"
-else
-    vdc_log "* DS MONITOR Error: ${MONITOR_DATA}"
+    #vdc_log "* Monitored $HOST on $MOUNT"
     echo "$MONITOR_DATA"
+else
+    vdc_log "* Error monitoring datastore @ ${HOST} ($2) ($MOUNT)"
+    echo "TOTAL_MB=0 FREE_MB=0 USED_MB=0"
 fi
+exit $MONITOR_STATUS
+

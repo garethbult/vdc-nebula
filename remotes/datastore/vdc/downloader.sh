@@ -186,29 +186,23 @@ esac
 ##
 file_type=$(get_type "$command")
 decompressor=$(get_decompressor "$file_type")
-logger "Decompressor is: $decompressor"
-
 dir=$(dirname ${TO})
 cd $dir
-
-logger "Running command: $command > ${TO}.bz2"
-$command > "${TO}.bz2"
-
-logger "cat ${TO}.bz2 | hasher $HASH_TYPE"
-cat "${TO}.bz2" | hasher $HASH_TYPE
+$command > "${TO}"
+cat "${TO}" | hasher $HASH_TYPE
 
 case "$file_type" in
 	"application/x-gzip")
-                logger "Running command: tar xSzf ${TO}.bz2"
-                tar xSzf "${TO}.bz2" && rm "${TO}.bz2"
+                mv ${TO} ${TO}.tgz
+                logger "Running command: tar xSzf ${TO}.tgz"
+                tar xSzf "${TO}.tgz" && rm "${TO}.tgz"
         	;;
 	"application/x-bzip2")
+                mv ${TO} ${TO}.bz2
                 logger "Running command: tar xSjf ${TO}.bz2"
                 tar xSjf "${TO}.bz2" && rm "${TO}.bz2"
 	        ;;
-    *)		logger "Running command: mv ${TO} ${DST}"
-		mv ${TO} ${DST}
-        	;;
+    *)		;;
 esac
 
 if [ "$?" != "0" ]; then

@@ -7,6 +7,7 @@ Do NOT put your live data on it, use it for TESTING ONLY.
 Changes
 =======
 
+08 Dec 2013 - Stabilised a little, running two machines live on this version
 06 Dec 2013 - More loading fixes, we can now batch create and migrate 40 vm's
 03 Dec 2013 - Lots of small changes to cope with launching lots of VM's
               at the same time - mostly to do with timeouts and locks

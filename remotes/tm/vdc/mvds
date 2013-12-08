@@ -43,5 +43,6 @@ eval `${tool} ln $VMID $DSID $DST_HOST`
 CACHE_PATH="/dev/${CACHE_LVM}"
 execute $DST_HOST "sudo $vdctool -n $NAME --stop" "Error stopping Cache"
 execute $DST_HOST "${vdctool} --wait STOPPED" "Failed waiting on vdc-stop"
+sleep 8
 execute $DST_HOST "sudo lvremove -f ${CACHE_PATH}/${NAME}" "Error removing Cache LVM"
 exit 0
