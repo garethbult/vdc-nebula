@@ -53,6 +53,6 @@ eval `${tool} ln $VMID $DSID $SRC_HOST`
 CACHE_PATH="/dev/${CACHE_LVM}"
 
 execute ${SRC_HOST} "${vdctool} --stop" "Failed to stop source cache"
-execute ${SRC_HOST} "${vdctool} --wait STOPPED" "Failed waiting on vdc-stop"
+#execute ${SRC_HOST} "${vdctool} --wait STOPPED" "Failed waiting on vdc-stop"
 execute ${SRC_HOST} "sudo lvremove -f ${CACHE_PATH}/${NAME}" "Error removing Cache LVM"
 exit 0

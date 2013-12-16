@@ -52,9 +52,9 @@ vdc_log "${tool} ln $VMID $DSID $DST_HOST"
 vdc_log "`${tool} ln $VMID $DSID $DST_HOST`"
 eval `${tool} ln $VMID $DSID $DST_HOST`
 
-execute ${DST_HOST} "$vdctool --create -c${CACHE_SIZE} --nonpersist --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
+execute ${DST_HOST} "$vdctool --create -c${CACHE_SIZE} --nonpersist lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
 execute ${DST_HOST} "${vdcstore}" "Unable to start cache on $DST_HOST"
-execute ${DST_HOST} "${vdctool} --wait STARTED" "Failed waiting on vdc-start"
+#execute ${DST_HOST} "${vdctool} --wait STARTED" "Failed waiting on vdc-start"
 execute ${SRC_HOST} "${vdctool} --migrate ${DST_HOST}" "Unable to complete cache migrate"
 #execute ${SRC_HOST} "${vdctool} --wait MIGRATE" "Failed waiting on vdc-migrate"
 exit 0

@@ -56,8 +56,8 @@ vdc_log "[`${tool} ln $VMID $DSID $DST_HOST`]"
 eval `${tool} ln $VMID $DSID $DST_HOST`
 
 execute ${DS_NAME} ${conf} "Error Updating VDC Server Config"
-execute $DST_HOST "sudo $vdctool -n  ${NAME} --create -c${CACHE_SIZE} --nonpersist --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
+execute $DST_HOST "sudo $vdctool -n  ${NAME} --create -c${CACHE_SIZE} --nonpersist lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
 execute $DST_HOST "$vdcstore" "Error starting VDC"
-execute $DST_HOST "sudo $vdctool  -n ${NAME} --wait STARTED" "Failed waiting on vdc-start"
+#execute $DST_HOST "sudo $vdctool  -n ${NAME} --wait STARTED" "Failed waiting on vdc-start"
 execute $DST_HOST "cd ${DST_DIR}; rm -f ${DST_PATH}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
 exit 0

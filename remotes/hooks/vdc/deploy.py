@@ -8,4 +8,10 @@ params = original.findall(".//disk")
 for p in params:
 	if p.get('device') == 'disk': p.insert(0,ET.Element("shareable",{}))
 
+params = original.findall(".//driver")
+for p in params:
+	if p.get('type') == 'raw': 
+		p.set("error_policy","stop")
+		p.set("discard","unmap")
+
 original.write(argv[1])

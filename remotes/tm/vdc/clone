@@ -67,8 +67,8 @@ http://*)
 esac
 
 execute ${DS_NAME} ${conf} "Error Updating VDC Server Config"
-execute $DST_HOST "$vdctool --create -c${CACHE_SIZE} --nonpersist --nouuid lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
+execute $DST_HOST "$vdctool --create -c${CACHE_SIZE} --nonpersist lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
 execute $DST_HOST "$vdcstore" "Error starting VDC"
 execute $DST_HOST "mkdir ${DST_BASE}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
-execute $DST_HOST "$vdctool --wait STARTED" "Failed waiting on vdc-start"
+#execute $DST_HOST "$vdctool --wait STARTED" "Failed waiting on vdc-start"
 exit 0

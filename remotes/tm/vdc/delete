@@ -39,7 +39,7 @@ DST_HOST=`arg_host $DST`
 vdc_log "${tool} ln $VMID $DSID $DST_HOST"
 eval `${tool} ln $VMID $DSID $DST_HOST`
 execute $DST_HOST "sudo $vdctool -n $NAME --stop" "Error stopping Cache"
-execute $DST_HOST "sudo $vdctool -n $NAME --wait STOPPED" "Error waiting for Cache to stop"
+#execute $DST_HOST "sudo $vdctool -n $NAME --wait STOPPED" "Error waiting for Cache to stop"
 vdc_log "${tool} del ${NAME}"
 eval `${tool} del ${NAME}`
 
