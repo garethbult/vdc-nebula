@@ -24,7 +24,6 @@ TEMP=$6
 ROOT=$(dirname $(dirname $(dirname $0)))
 source ${ROOT}/hooks/vdc/common.sh
 
-#NAME="ON_IM_$VMID"
 CACHE_SIZE="none"
 CACHE_LVM="none"
 DS_NAME="none"
@@ -53,6 +52,5 @@ eval `${tool} ln $VMID $DSID $SRC_HOST`
 CACHE_PATH="/dev/${CACHE_LVM}"
 
 execute ${SRC_HOST} "${vdctool} --stop" "Failed to stop source cache"
-#execute ${SRC_HOST} "${vdctool} --wait STOPPED" "Failed waiting on vdc-stop"
 execute ${SRC_HOST} "sudo lvremove -f ${CACHE_PATH}/${NAME}" "Error removing Cache LVM"
 exit 0

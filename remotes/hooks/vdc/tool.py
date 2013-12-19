@@ -53,6 +53,17 @@ def do_add(name,dest,size):
   cur.execute("INSERT INTO vdc (name,path,size) VALUES ('"+name+"','"+dest+"','"+size+"')")
   return
 
+def do_getpath(name):
+  """ look up the path of a non persistent VM """
+  cur.execute("SELECT path FROM vdc WHERE name = '%s'" % name)
+  rows = cur.fetchall()
+  if(not len(rows)):
+    print "IM_PATH=''"
+    return
+
+  print "IM_PATH='%s'" % rows[0]['path']
+  return
+
 def do_del(name):
   """ check if we need to delete a transient copy """
   cur.execute("SELECT * FROM vdc WHERE name = '"+name+"'")
@@ -86,6 +97,12 @@ elif argv[1] == "del":
     print "Usage: "+argv[0]+" del <name>"
     exit(1)
   do_del(argv[2])
+
+elif argv[1] == "getpath":
+  if len(argv)<3:
+    print "Usage: "+argv[0]+" del <name>"
+    exit(1)
+  do_getpath(argv[2])
 
 else:
   print "Unknown command: "+argv[0]

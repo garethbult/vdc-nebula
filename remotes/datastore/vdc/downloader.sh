@@ -177,18 +177,28 @@ http://*|https://*)
     fi
 
     command="curl $curl_args"
+    file_type=$(get_type "$command")
+    decompressor=$(get_decompressor "$file_type")
+    dir=$(dirname ${TO})
+    cd $dir
+    $command > "${TO}"
     ;;
 *)
     command="cat $FROM"
+    file_type=$(get_type "$command")
+    decompressor=$(get_decompressor "$file_type")
+    dir=$(dirname ${TO})
+    cd $dir
+    cp -ra --sparse=always ${FROM} ${TO}
     ;;
 esac
 
 ##
-file_type=$(get_type "$command")
-decompressor=$(get_decompressor "$file_type")
-dir=$(dirname ${TO})
-cd $dir
-$command > "${TO}"
+#file_type=$(get_type "$command")
+#decompressor=$(get_decompressor "$file_type")
+#dir=$(dirname ${TO})
+#cd $dir
+#$command > "${TO}"
 cat "${TO}" | hasher $HASH_TYPE
 
 case "$file_type" in

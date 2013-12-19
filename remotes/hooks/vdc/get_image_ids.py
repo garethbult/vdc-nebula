@@ -31,11 +31,9 @@ cur.execute("FLUSH QUERY CACHE");
 
 output=""
 vmid=int(sys.argv[1])
-cur.execute("SELECT * FROM vm_pool")
+cur.execute("SELECT * FROM vm_pool WHERE oid = '%s'" % vmid)
 rows = cur.fetchall()
 for row in rows:
-  oid=int(row['oid'])
-  if oid <> vmid: continue
   elements = {}
   xmlParse(elements,ET.fromstring(row['body']))
   temp = elements.get('TEMPLATE',None)

@@ -74,6 +74,11 @@ http://*|https://*)
         vdc_log "* Error -> Not allowed to copy image file $SRC"
         exit -1
     fi
+    if [ ! -G "${SRC}" ] ; then
+        vdc_log "File (${SRC}) owner/group needs to be 'oneadmin'"
+        log "File (${SRC}) owner/group needs to be 'oneadmin'"
+        exit 1
+    fi
     log "Copying local image $SRC to the image repository"
     execute $DST_HOST "$COPY_COMMAND" "Error copying $SRC to $DST"
     ;;
