@@ -46,6 +46,14 @@ def do_ln(vmid,dsid,host):
   print "DS_NAME='%s'"     % Get("datastore_pool","oid",str(dsid),"NAME",False)
   print "CACHE_SIZE='%s'"  % Get("vm_pool","oid",str(vmid),"TEMPLATE,CONTEXT,VDC_CACHE_SIZE",False)
   print "CACHE_LVM='%s'"   % Get("host_pool","name",host,"TEMPLATE,VDC_CACHE_LVM",False)
+
+  replica = Get("vm_pool","oid",str(vmid),"USER_TEMPLATE,REPLICA",False)
+  if replica <> "none":
+    ds = Get("image_pool","oid",replica,"DATASTORE",False)
+    print "REPLICA_DS='%s'" % ds
+    print "REPLICA_STORE='ONE_%s_%s'" % (replica,vmid)
+
+  print "REPLICA_ID='%s'"  % replica
   return
 
 def do_add(name,dest,size):

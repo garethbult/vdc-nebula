@@ -1,12 +1,14 @@
 You can now find the Installation documentation on <a href="http://www.vdc-store.com">http://www.vdc-store.com</a>.
 
 Please note this software is BETA.<br/>
-Do NOT put your live data on it, use it for TESTING ONLY.
+Do NOT put your live data on it, use it for TESTING ONLY - please use the RC which is
+available for download from the website.
 
 <pre>
 Changes
 =======
 
+30 Dec 2013 - Do no use this revision - changes in progress.
 19 Dec 2013 - See issues #171, #192, #208, #217, #218, #219
 16 Dec 2013 - This is RC1 - we're running live VM's on this (although taking 
               regular backups!)

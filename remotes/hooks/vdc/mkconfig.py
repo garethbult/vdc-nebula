@@ -12,7 +12,6 @@ from time import sleep
 CONFIG_FILE = "/etc/vdc/config.new"
 CONFIG_LIVE = "/etc/vdc/config"
 CONFIG_LOCK = "/etc/vdc/config.lock"
-#CONFIG_FILE = "config.temp"
 VDC_NAMES = []
 hostname = os.uname()[1]
 
@@ -62,6 +61,7 @@ for row in rows:
   disk = temp.get('DISK',None)
   if not disk: continue
   if type(disk) <> type([]): disk = [disk]
+  syslog(LOG_INFO,str(disk))
   for d in disk:
     if d['TM_MAD']    <> 'vdc':    continue
     if d['DATASTORE'] <> hostname: continue
@@ -71,6 +71,8 @@ for row in rows:
       images[imid]=[vmid]
     else:
       images[imid]=images[imid]+[vmid]
+
+syslog(LOG_INFO,str(images))
 
 cur.execute("SELECT * FROM datastore_pool WHERE name = '%s'" % hostname)
 rows = cur.fetchall()
@@ -123,7 +125,7 @@ for row in cur.fetchall():
   if(not used): continue
 
   for vmid in images.get(id,[]):
-    name = "ON_"+str(id)+"_"+str(vmid)
+    name = "ONE_"+str(id)+"_"+str(vmid)
     dst.write("[%s]\n" % name)
     dst.write("  size = %s\n" % size)
     dst.write("  proto = lsfs\n")

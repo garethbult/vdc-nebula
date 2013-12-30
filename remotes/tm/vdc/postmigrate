@@ -36,8 +36,12 @@ vdc="${ROOT}/../vdc-nebula/remotes/binaries"
 vdc_log "PostMigrate with NAME=${NAME}"
 eval `${gids} $VMID`
 
-vdctool="sudo $vdc/vdc-tool -n ${NAME} "
-vdcstore="sudo $vdc/vdc-store -n ${NAME} "
+#vdctool="sudo $vdc/vdc-tool -n ${NAME} "
+#vdcstore="sudo $vdc/vdc-store -n ${NAME} "
+
+vdctool="sudo $vdc/vdc-tool -n ${CACHE} "
+vdcstore="sudo $vdc/vdc-store -n ${CACHE} "
+
 
 while IFS= read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
@@ -52,5 +56,6 @@ eval `${tool} ln $VMID $DSID $SRC_HOST`
 CACHE_PATH="/dev/${CACHE_LVM}"
 
 execute ${SRC_HOST} "${vdctool} --stop" "Failed to stop source cache"
-execute ${SRC_HOST} "sudo lvremove -f ${CACHE_PATH}/${NAME}" "Error removing Cache LVM"
+execute ${SRC_HOST} "sudo lvremove -f ${CACHE_PATH}/${CACHE}" "Error removing Cache LVM"
+#execute ${SRC_HOST} "sudo lvremove -f ${CACHE_PATH}/${NAME}" "Error removing Cache LVM"
 exit 0

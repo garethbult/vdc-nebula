@@ -40,15 +40,21 @@ gids="${ROOT}/hooks/vdc/get_image_ids.py"
 vdc="${ROOT}/../vdc-nebula/remotes/binaries"
 
 eval `${gids} $VMID`
-vdc_log "Running CLONE with DST_DIR=${DST_DIR} VMID=$VMID DSID=$DSID SRC=$1 DST=$2 NAME=$NAME"
+vdc_log "Running CLONE with DST_DIR=${DST_DIR} VMID=$VMID DSID=$DSID SRC=$1 DST=$2"
+#NAME=$NAME"
+vdc_log "STORE=${STORE} CACHE=${CACHE}"
 
-vdctool="sudo $vdc/vdc-tool -n $NAME "
-vdcstore="sudo /bin/bash -c 'ulimit -c unlimited && exec $vdc/vdc-store -n $NAME'"
+vdctool="sudo $vdc/vdc-tool -n ${CACHE} "
+#vdctool="sudo $vdc/vdc-tool -n $NAME "
+vdcstore="sudo /bin/bash -c 'ulimit -c unlimited && exec $vdc/vdc-store -n ${CACHE}'"
+#vdcstore="sudo /bin/bash -c 'ulimit -c unlimited && exec $vdc/vdc-store -n $NAME'"
 
 eval `${tool} ln $VMID $DSID $DST_HOST`
 
-vdc_log "${tool} add ${NAME} ${DST_DIR} 0"
-${tool} add ${NAME} ${DST_DIR} 0
+#vdc_log "${tool} add ${NAME} ${DST_DIR} 0"
+vdc_log "${tool} add ${STORE} ${DST_DIR} 0"
+#${tool} add ${NAME} ${DST_DIR} 0
+${tool} add ${STORE} ${DST_DIR} 0
 
 ssh_make_path $DS_NAME $BASE_PATH
 vdc_make_path $DS_NAME $DST_DIR
@@ -67,8 +73,10 @@ http://*)
 esac
 
 execute ${DS_NAME} ${conf} "Error Updating VDC Server Config"
-execute $DST_HOST "$vdctool --create -c${CACHE_SIZE} --nonpersist lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
+execute $DST_HOST "$vdctool --create -c${CACHE_SIZE} --nonpersist lvm:${CACHE_LVM}/${CACHE} vdc:${DS_NAME}/${STORE}" "Error creating Cache"
+#execute $DST_HOST "$vdctool --create -c${CACHE_SIZE} --nonpersist lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
 execute $DST_HOST "$vdcstore" "Error starting VDC"
-execute $DST_HOST "mkdir ${DST_BASE}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
+execute $DST_HOST "mkdir ${DST_BASE}; ln -s /dev/vdc/mapper/${CACHE} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${CACHE}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${CACHE}"
+#execute $DST_HOST "mkdir ${DST_BASE}; ln -s /dev/vdc/mapper/${NAME} ${DST_PATH}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}" "Error linking ${DST_PATH} to /dev/vdc/mapper/${NAME}"
 #execute $DST_HOST "$vdctool --wait STARTED" "Failed waiting on vdc-start"
 exit 0

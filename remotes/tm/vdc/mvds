@@ -28,10 +28,10 @@ gids="${ROOT}/hooks/vdc/get_image_ids.py"
 vdc="${ROOT}/../vdc-nebula/remotes/binaries"
 vdctool="$vdc/vdc-tool"
 vdcstore="$vdc/vdc-store"
+vdc_log "=>MVDS ($1) ($2) ($3) $(4)"
 
 eval `${gids} $VMID`
 
-#NAME="ON_IM_$VMID"
 CACHE_SIZE="none"
 CACHE_LVM="none"
 DS_NAME="none"
@@ -40,9 +40,22 @@ DST_HOST=`arg_host $SRC`
 vdc_log "${tool} ln $VMID $DSID $DST_HOST"
 eval `${tool} ln $VMID $DSID $DST_HOST`
 
+#if [ ! -z "${IM_PATH}" ]
+#then
+#        vdc_log "-> NON-Persistent image, removing data"
+#        execute $DS_NAME "sudo rm -rf ${IM_PATH}/Snapshots.ldb" "Error removing snapshots DB"
+#        execute $DS_NAME "sudo rm -f  ${IM_PATH}/Image.img" "Error removing main image"
+#        execute $DS_NAME "sudo rmdir ${IM_PATH}" "Error removing directory"
+#else
+#        vdc_log "-> Persistent image, data left undisturbed"
+#fi
+DISK_ID=`echo ${SRC} | awk -F. '{print $NF}'`
 CACHE_PATH="/dev/${CACHE_LVM}"
-execute $DST_HOST "sudo $vdctool -n $NAME --stop" "Error stopping Cache"
-#execute $DST_HOST "${vdctool} --wait STOPPED" "Failed waiting on vdc-stop"
-#sleep 8
-execute $DST_HOST "sudo lvremove -f ${CACHE_PATH}/${NAME}" "Error removing Cache LVM"
+if [ ${DISK_ID} == "0" ]
+then
+    execute $DST_HOST "sudo $vdctool -n ${CACHE} --stop" "Error stopping Cache"
+    execute $DST_HOST "sudo lvremove -f ${CACHE_PATH}/${CACHE}" "Error removing Cache LVM"
+else
+    vdc_log "* Secondary disk [${DISK_ID}] - nothing to do"
+fi
 exit 0
