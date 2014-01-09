@@ -16,6 +16,7 @@
 #--------------------------------------------------------------------------- #
 ROOT=$(dirname $(dirname $(dirname $0)))
 source ${ROOT}/hooks/vdc/common.sh
+vdc_log "=>MVDS ($1) ($2) ($3) $(4)"
 
 SRC=$1
 DST=$2
@@ -23,22 +24,39 @@ VMID=$3
 DSID=$4
 
 tool="${ROOT}/hooks/vdc/tool.py"
-conf="${ROOT}/hooks/vdc/mkconfig.py"
-gids="${ROOT}/hooks/vdc/get_image_ids.py"
 vdc="${ROOT}/../vdc-nebula/remotes/binaries"
 vdctool="$vdc/vdc-tool"
 vdcstore="$vdc/vdc-store"
-vdc_log "=>MVDS ($1) ($2) ($3) $(4)"
 
-eval `${gids} $VMID`
-
-CACHE_SIZE="none"
-CACHE_LVM="none"
-DS_NAME="none"
 DST_HOST=`arg_host $SRC`
+DISK_ID=`echo ${SRC} | awk -F. '{print $NF}'`
 
-vdc_log "${tool} ln $VMID $DSID $DST_HOST"
-eval `${tool} ln $VMID $DSID $DST_HOST`
+if [ ${DISK_ID} == "0" ]
+then
+    vdc_log "${tool} env ${VMID} ${DSID} ${DST_HOST} ''"
+    vdc_log "`${tool} env ${VMID} ${DSID} ${DST_HOST} ''`"
+    eval `${tool} env ${VMID} ${DSID} ${DST_HOST} ''`
+    CACHE_PATH="/dev/${CACHE_LVM}"
+
+    execute $DST_HOST "sudo $vdctool -n ${CACHE} --stop" "Error stopping Cache"
+    execute $DST_HOST "sudo lvremove -f ${CACHE_PATH}/${CACHE}" "Error removing Cache LVM"
+else
+    vdc_log "* Secondary disk [${DISK_ID}] - nothing to do"
+fi
+exit 0
+
+
+
+
+
+#conf="${ROOT}/hooks/vdc/mkconfig.py"
+#gids="${ROOT}/hooks/vdc/get_image_ids.py"
+#eval `${gids} $VMID`
+#CACHE_SIZE="none"
+#CACHE_LVM="none"
+#DS_NAME="none"
+#vdc_log "${tool} ln $VMID $DSID $DST_HOST"
+#eval `${tool} ln $VMID $DSID $DST_HOST`
 
 #if [ ! -z "${IM_PATH}" ]
 #then
@@ -49,13 +67,3 @@ eval `${tool} ln $VMID $DSID $DST_HOST`
 #else
 #        vdc_log "-> Persistent image, data left undisturbed"
 #fi
-DISK_ID=`echo ${SRC} | awk -F. '{print $NF}'`
-CACHE_PATH="/dev/${CACHE_LVM}"
-if [ ${DISK_ID} == "0" ]
-then
-    execute $DST_HOST "sudo $vdctool -n ${CACHE} --stop" "Error stopping Cache"
-    execute $DST_HOST "sudo lvremove -f ${CACHE_PATH}/${CACHE}" "Error removing Cache LVM"
-else
-    vdc_log "* Secondary disk [${DISK_ID}] - nothing to do"
-fi
-exit 0

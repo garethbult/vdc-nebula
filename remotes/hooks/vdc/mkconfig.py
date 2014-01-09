@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import MySQLdb
 import xml.etree.ElementTree as ET
@@ -47,40 +48,8 @@ def xmlParse(elements,xml):
       elements[elem.tag] = sub
 
 db = MySQLdb.connect(host="nebula",user="oneadmin",passwd="oneadmin",db="opennebula")
-cur = db.cursor(MySQLdb.cursors.DictCursor) 
-cur.execute("FLUSH QUERY CACHE");
-
-images={}
-cur.execute("SELECT * FROM vm_pool WHERE state <> 6")
-rows = cur.fetchall()
-for row in rows:
-  elements = {}
-  xmlParse(elements,ET.fromstring(row['body']))
-  temp = elements.get('TEMPLATE',None)
-  if not temp: continue
-  disk = temp.get('DISK',None)
-  if not disk: continue
-  if type(disk) <> type([]): disk = [disk]
-  syslog(LOG_INFO,str(disk))
-  for d in disk:
-    if d['TM_MAD']    <> 'vdc':    continue
-    if d['DATASTORE'] <> hostname: continue
-    vmid = row['oid']
-    imid = d['IMAGE_ID']
-    if not images.has_key(imid):
-      images[imid]=[vmid]
-    else:
-      images[imid]=images[imid]+[vmid]
-
-syslog(LOG_INFO,str(images))
-
-cur.execute("SELECT * FROM datastore_pool WHERE name = '%s'" % hostname)
-rows = cur.fetchall()
-if( len(rows) <> 1 ):
-  print("# ERROR :: needs to be exactly one datastore with name '%s', found %s",hostname,len(rows))
-  sys.exit(1)
-
-oid = int(rows[0]['oid'])
+cursor = db.cursor(MySQLdb.cursors.DictCursor)
+cursor.execute("FLUSH QUERY CACHE");
 
 syslog(LOG_INFO,"* mkconfig :: ++++")
 syslog(LOG_INFO,"* mkconfig :: Acquiring configuration file")
@@ -93,7 +62,7 @@ while True:
 
   syslog(LOG_INFO,"* mkconfig :: Acquiring configuration lock")
   if LockFile(lck): break
-  close(lck)
+  lck.close()
   time.sleep(1)
 
 syslog(LOG_INFO,"* mkconfig :: Opening new target")
@@ -107,40 +76,47 @@ dst.write("#\n# VDC Config file\n")
 dst.write("# AUTO-GENERATED - DO NOT EDIT!\n#\n")
 dst.write("[global]\n  host = "+hostname+"\n")
 dst.write("  proto = lsfs\n")
-dst.write("  path = /var/lib/one/images\n")
-dst.write("  size = 10G\n")
 
-cur.execute("SELECT * FROM image_pool")
-for row in cur.fetchall():
-  elements = {}
-  xmlParse(elements,ET.fromstring(row['body']))
-  if int(elements['DATASTORE_ID']) <> oid: continue
-  persist = int(elements['PERSISTENT'])
+cursor.execute("SELECT * FROM image_pool")
+for row in cursor.fetchall():
+    xml = {}
+    xmlParse(xml,ET.fromstring(row['body']))
+    dsid = row['oid']
+    desc = xml.get('NAME','Unknown')
+    path = xml.get('SOURCE',None)
+    host = xml.get('DATASTORE',None)
+    temp = xml.get('TEMPLATE',None)
+    size = temp.get('CAPACITY',None)
 
-  id   = elements.get('ID','0')
-  path = elements.get('SOURCE','none')
-  temp = elements.get('TEMPLATE',{})
-  size = temp.get('CAPACITY','10G')
-  used = elements.get('VMS',None)
-  if(not used): continue
+    if host <> hostname: continue
+    if size == None:
+        dst.write('# Error : no size for %s' % "ONE_"+str(dsid))
+        continue
 
-  for vmid in images.get(id,[]):
-    name = "ONE_"+str(id)+"_"+str(vmid)
+    name = "ONE_"+str(dsid)
     dst.write("[%s]\n" % name)
-    dst.write("  size = %s\n" % size)
-    dst.write("  proto = lsfs\n")
-    if not persist:
-      cur.execute("SELECT * FROM vdc WHERE name = '"+name+"'")
-      rows = cur.fetchall()
-      if not len(rows):
-        # sleep(2)
-        cur.execute("SELECT * FROM vdc WHERE name = '"+name+"'")
-        rows = cur.fetchall()
-        # FIXME :: THIS is a timing issue, needs a better fix
-        if not len(rows): continue
-      row = rows[0]
-      path = row['path']
+#    dst.write("  desc = %s\n" % desc)
     dst.write("  path = %s\n" % path)
+    dst.write("  size = %s\n" % size)
+
+dst.write('#\n# Non-persistent images here ...\n#\n')
+
+cursor.execute("SELECT * FROM vdc_pool")
+for row in cursor.fetchall():
+    #print row
+    #print row['host'],hostname
+    if row['host'] <> hostname: continue
+
+    store = row['store']
+    #if row['size'] == None:
+   #     dst.write('# Error : no size for %s' % store)
+   #     continue
+
+    #print store
+    dst.write("[%s]\n" % store)
+    dst.write("  path = %s\n" % row['path'])
+    dst.write("  size = %s\n" % row['size'])
+
 
 dst.close()
 syslog(LOG_INFO,"* mkconfig :: Target generation complete")
@@ -155,7 +131,7 @@ while True:
 
   syslog(LOG_INFO,"* mkconfig :: Acquiring live lock [contend with server]")
   if LockFile(dst): break
-  close(dst)
+  dst.close()
   time.sleep(1)
 
 try:
@@ -173,3 +149,68 @@ UnlockFile(lck)
 lck.close()
 syslog(LOG_INFO,"* mkconfig :: ++++")
 sys.exit(0)
+
+
+
+#cur.execute("SELECT * FROM image_pool")
+#for row in cur.fetchall():
+#  elements = {}
+#  xmlParse(elements,ET.fromstring(row['body']))
+#  if int(elements['DATASTORE_ID']) <> oid: continue
+# persist = int(elements['PERSISTENT'])
+
+#  id   = elements.get('ID','0')
+#  path = elements.get('SOURCE','none')
+#  temp = elements.get('TEMPLATE',{})
+#  size = temp.get('CAPACITY','10G')
+#  used = elements.get('VMS',None)
+#  if(not used): continue
+
+#  for vmid in images.get(id,[]):
+#    name = "ONE_"+str(id)+"_"+str(vmid)
+#    dst.write("[%s]\n" % name)
+#    dst.write("  size = %s\n" % size)
+#    dst.write("  proto = lsfs\n")
+#    if not persist:
+#      cur.execute("SELECT * FROM vdc WHERE name = '"+name+"'")
+#      rows = cur.fetchall()
+#      if not len(rows):
+#        # sleep(2)
+##       cur.execute("SELECT * FROM vdc WHERE name = '"+name+"'")
+#        rows = cur.fetchall()
+#        # FIXME :: THIS is a timing issue, needs a better fix
+#        if not len(rows): continue
+#      row = rows[0]
+#      path = row['path']
+#    dst.write("  path = %s\n" % path)
+
+#images={}
+#cur.execute("SELECT * FROM vm_pool WHERE state <> 6")
+#rows = cur.fetchall()
+#for row in rows:
+#  elements = {}
+#  xmlParse(elements,ET.fromstring(row['body']))
+#  temp = elements.get('TEMPLATE',None)
+#  if not temp: continue
+#  disk = temp.get('DISK',None)
+#  if not disk: continue
+#  if type(disk) <> type([]): disk = [disk]
+#  syslog(LOG_INFO,str(disk))
+#  for d in disk:
+#    if d['TM_MAD']    <> 'vdc':    continue
+#    if d['DATASTORE'] <> hostname: continue
+#    vmid = row['oid']
+#    imid = d['IMAGE_ID']
+#    if not images.has_key(imid):
+#      images[imid]=[vmid]
+#    else:
+#      images[imid]=images[imid]+[vmid]
+
+#syslog(LOG_INFO,str(images))
+
+#cur.execute("SELECT * FROM datastore_pool WHERE name = '%s'" % hostname)
+#rows = cur.fetchall()
+#if( len(rows) <> 1 ):
+#  print("# ERROR :: needs to be exactly one datastore with name '%s', found %s",hostname,len(rows))
+#  sys.exit(1)
+#oid = int(rows[0]['oid'])

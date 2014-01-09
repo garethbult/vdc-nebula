@@ -17,6 +17,9 @@
 ROOT=$(dirname $(dirname $(dirname $0)))
 source ${ROOT}/hooks/vdc/common.sh
 
+vdc_log "=> CP ($2)"
+conf="${ROOT}/hooks/vdc/mkconfig.py"
+
 while IFS= read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
 done < <($XPATH     /DS_DRIVER_ACTION_DATA/DATASTORE/BASE_PATH \
@@ -43,7 +46,6 @@ DST_HOST="${XPATH_ELEMENTS[8]}"
 MOUNTPOINT="${XPATH_ELEMENTS[9]}"
 DS_ID="${XPATH_ELEMENTS[10]}"
 ID=$2
-vdc_log "Running CP with ID=$ID"
 
 DS=$(dirname $BASE_PATH)
 set_up_datastore "$BASE_PATH" "$RESTRICTED_DIRS" "$SAFE_DIRS"
@@ -54,8 +56,8 @@ if [ ! -h ${DS}/${DS_ID} ] ; then
     execute $DST_HOST "mkdir -p ${path}" "Error creating directory ${path}"
     execute $DST_HOST "ln -s ${path} ${DS}/${DS_ID}" "Unable to create link to ${path}"
 fi
-
-execute $DST_HOST "mkdir -p $DST" "Error creating directory $DST"
+#execute ${DST_HOST} ${conf} "Error Updating VDC Server Config"
+execute ${DST_HOST} "mkdir -p $DST" "Error creating directory $DST"
 
 if [ "$SRC" == "REPLICA" ] ; then
     echo "$DST"
@@ -89,5 +91,6 @@ http://*|https://*)
     ;;
 esac
 vdc_log "* copy is complete ($SRC -> $DST)"
+#execute ${DST_HOST} ${conf} "Error Updating VDC Server Config"
 echo "$DST"
 exit 0

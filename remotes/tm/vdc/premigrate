@@ -39,10 +39,7 @@ eval `${gids} $VMID`
 vdc_log "Premigrate with NAME=${CACHE}"
 
 vdctool="sudo $vdc/vdc-tool -n ${CACHE} "
-#vdctool="sudo $vdc/vdc-tool -n ${NAME} "
-#vdcstore="sudo $vdc/vdc-store -n ${NAME} "
-#vdcstore="sudo /bin/bash -c 'ulimit -c unlimited && exec $vdc/vdc-store -n $NAME'"
-vdcstore="sudo /bin/bash -c 'ulimit -c unlimited && exec $vdc/vdc-store -n ${CACHE}'"
+vdcstore="sudo /bin/bash -c 'ulimit -c unlimited && exec $vdc/vdc-store -n ${CACHE} -R'"
 
 while IFS= read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
@@ -54,8 +51,16 @@ vdc_log "${tool} ln $VMID $DSID $DST_HOST"
 vdc_log "`${tool} ln $VMID $DSID $DST_HOST`"
 eval `${tool} ln $VMID $DSID $DST_HOST`
 
-execute ${DST_HOST} "$vdctool --create -c${CACHE_SIZE} --nonpersist lvm:${CACHE_LVM}/${CACHE} vdc:${DS_NAME}/${STORE}" "Error creating Cache"
-#execute ${DST_HOST} "$vdctool --create -c${CACHE_SIZE} --nonpersist lvm:${CACHE_LVM}/${NAME} vdc:${DS_NAME}/${NAME}" "Error creating Cache"
+execute ${DS_NAME}    "sudo ${conf}" "Error Updating VDC Server Config"
+if [ "${REPLICA_ID}" == "none" ]
+then
+    REPLICA=""
+else
+    REPLICA="vdc:${REPLICA_DS}/${REPLICA_STORE}"
+    execute ${REPLICA_DS} "sudo ${conf}" "Error Updating VDC Server Config"
+fi
+
+execute ${DST_HOST} "$vdctool --create -c${CACHE_SIZE} --nonpersist lvm:${CACHE_LVM}/${CACHE} vdc:${DS_NAME}/${STORE} $REPLICA" "Error creating Cache"
 execute ${DST_HOST} "${vdcstore}" "Unable to start cache on $DST_HOST"
 execute ${SRC_HOST} "${vdctool} --migrate ${DST_HOST}" "Unable to complete cache migrate"
 exit 0

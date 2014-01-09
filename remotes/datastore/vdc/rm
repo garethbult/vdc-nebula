@@ -17,6 +17,8 @@
 ROOT=$(dirname $(dirname $(dirname $0)))
 source ${ROOT}/hooks/vdc/common.sh
 
+conf="${ROOT}/hooks/vdc/mkconfig.py"
+
 while IFS= read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
 done < <($XPATH     /DS_DRIVER_ACTION_DATA/IMAGE/SOURCE \
@@ -37,4 +39,5 @@ else
     vdc_log "* Error: unable to mark $SRC for deletion"
     exit 1
 fi
+#execute ${DST_HOST} "sudo ${conf}" "Error Updating VDC Server Config"
 exit 0

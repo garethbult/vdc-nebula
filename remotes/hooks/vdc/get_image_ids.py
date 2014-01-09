@@ -37,7 +37,7 @@ def getPath(vmid):
 
 db = MySQLdb.connect(host="nebula",user="oneadmin",passwd="oneadmin",db="opennebula")
 cur = db.cursor(MySQLdb.cursors.DictCursor)
-cur.execute("FLUSH QUERY CACHE");
+#cur.execute("FLUSH QUERY CACHE");
 
 output=""
 vmid=int(sys.argv[1])
@@ -66,7 +66,7 @@ for row in rows:
     if len(path) and (source <> path): continue
 
     print 'NAME="ON_%s_%s"' % (str(imid),str(vmid))
-    print 'STORE="ONE_%s_%s"' % (str(imid),str(vmid))
+    print 'STORE="ONE_%s"' % str(imid)
     print 'CACHE="ONE_%s"' % str(vmid)
     sys.exit(0)
 

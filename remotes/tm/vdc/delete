@@ -16,36 +16,47 @@
 #--------------------------------------------------------------------------- #
 ROOT=$(dirname $(dirname $(dirname $0)))
 source ${ROOT}/hooks/vdc/common.sh
+vdc_log "=>DELETE ($1) ($2) ($3)"
 
 DST=$1
 VMID=$2
 DSID=$3
 
 tool="${ROOT}/hooks/vdc/tool.py"
-conf="${ROOT}/hooks/vdc/mkconfig.py"
-gids="${ROOT}/hooks/vdc/get_image_ids.py"
+#conf="${ROOT}/hooks/vdc/mkconfig.py"
+#gids="${ROOT}/hooks/vdc/get_image_ids.py"
 vdc="${ROOT}/../vdc-nebula/remotes/binaries"
 vdctool="$vdc/vdc-tool"
-vdc_log "=>DELETE ($1) ($2) ($3)"
-eval `${gids} $VMID`
 
-CACHE_SIZE="none"
-CACHE_LVM="none"
-DS_NAME="none"
+#eval `${gids} $VMID`
+#CACHE_SIZE="none"
+#CACHE_LVM="none"
+#DS_NAME="none"
 DST_HOST=`arg_host $DST`
 
-vdc_log "${tool} ln $VMID $DSID $DST_HOST"
-eval `${tool} ln $VMID $DSID $DST_HOST`
+#vdc_log "${tool} ln $VMID $DSID $DST_HOST"
+#eval `${tool} ln $VMID $DSID $DST_HOST`
+
+vdc_log "${tool} env ${VMID} ${DSID} ${DST_HOST} ''"
+vdc_log "`${tool} env ${VMID} ${DSID} ${DST_HOST} ''`"
+eval `${tool} env ${VMID} ${DSID} ${DST_HOST} ''`
+
 execute $DST_HOST "sudo $vdctool -n ${CACHE} --stop" "Error stopping Cache"
 vdc_log "${tool} del ${STORE}"
 eval `${tool} del ${STORE}`
 
-if [ ! -z "${IM_PATH}" ]
+if [ "${PERSISTENT}" == "0" ]
 then
         vdc_log "=> NON-Persistent image, removing data"
-        execute $DS_NAME "sudo rm -rf ${IM_PATH}/Snapshots.ldb" "Error removing snapshots DB"
-        execute $DS_NAME "sudo rm -f  ${IM_PATH}/Image.img" "Error removing main image"
-        execute $DS_NAME "sudo rmdir ${IM_PATH}" "Error removing directory"
+        if [ -z "${IM_PATH}" ]
+        then
+            vdc_log "CRITICAL :: Unable to remove transient copy - no DB entry"
+        else
+        # execute DS_NAME
+            vdc_log "sudo rm -rf ${IM_PATH}/Snapshots.ldb" "Error removing snapshots DB"
+            vdc_log "sudo rm -f  ${IM_PATH}/Image.img" "Error removing main image"
+            vdc_log "sudo rmdir ${IM_PATH}" "Error removing directory"
+        fi
 else
         vdc_log "=> Persistent image, data left undisturbed"
 fi
