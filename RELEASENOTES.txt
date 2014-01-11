@@ -1,0 +1,31 @@
+Release Candidate # 2
+=====================
+
+1.	Make sure you close down your VM's before upgrading
+2.	Note that the naming scheme for VM's and LVM partitions has changed
+3.	Note the custom SQL table has changed, this is reflected in the docs
+        new details;
+
+CREATE TABLE `vdc_pool` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `store` varchar(32) DEFAULT NULL,
+  `path` varchar(256) DEFAULT NULL,
+  `host` varchar(45) DEFAULT NULL,
+  `size` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `store_UNIQUE` (`store`)
+) ENGINE=MyISAM AUTO_INCREMENT=1729 DEFAULT CHARSET=latin1;
+
+4.	A number of bugs have been fixed, but in particular the use of
+   	mlockall was amended to fix an issue with the client cache
+	crashing under certain circumstances. (typically this would 
+	cause a number of unrelated caches to crash as parts of them
+	would be swapped out during inactivity)
+
+5.	The next release will contain some performance enhancements for
+	uncached reads, note that the performance you see will depend
+	on the quality of your equipment, but currently uncached reads
+	on a 1G network will deliver a throughput of between 45 and 90
+	Mbytes per sec. Cached reads will vary depending on the speed
+	of your SSD, using 2xSSD's we're seeing up to 800Mb/sec for 
+	SSD cache and around 3G/sec for page cache.
