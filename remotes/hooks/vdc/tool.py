@@ -18,12 +18,8 @@ def xmlParse(elements,xml):
     else:
       elements[elem.tag] = elem.text
 
-#print "# 1"
 db = MySQLdb.connect(host="127.0.0.1",user="root",passwd="",db="opennebula")
-#print "# 2"
 cur = db.cursor(MySQLdb.cursors.DictCursor) 
-#print "# 3"
-#cur.execute("FLUSH QUERY CACHE");
 
 def Get(table,key,val,keys,debug):
   """ interrogate the XML """
@@ -36,23 +32,21 @@ def Get(table,key,val,keys,debug):
 
     if debug: print elements
 
-    #print "# a"
     keys = keys.split(",")
-    #print "# b"
     for k in keys:
-      #print "# c:",k
       if elements.has_key(k):
         elements = elements[k]
       else:
-        #print "# d"
         return "none"
-    #print "# e"
     return elements
 
   except:
     pass
-  #print "# f"
   return "none"
+
+def do_getlvm(host):
+    """ return the logical volume the cache is sitting on """
+    print "CACHE_LVM='%s'"   % Get("host_pool","name",host,"TEMPLATE,VDC_CACHE_LVM",False)
 
 def do_env(vmid,dsid,host,path):
     """ set environment variable from SQL """
@@ -61,7 +55,6 @@ def do_env(vmid,dsid,host,path):
         path=path.split("/")
         if len(path): path = path[-1]
 
-    #print "# A"
     replica_ds = "none"
     replica_store = "none"
     replica_id = "none"
@@ -71,15 +64,10 @@ def do_env(vmid,dsid,host,path):
     persistent = "1"
     capacity = "none"
 
-    #print "# B"
     cache_size  = Get("vm_pool","oid",str(vmid),"TEMPLATE,CONTEXT,VDC_CACHE_SIZE",False)
-    #print "# C"
     cache_lvm   = Get("host_pool","name",host,"TEMPLATE,VDC_CACHE_LVM",False)
-    #print "# D"
     ds_name     = Get("datastore_pool","oid",str(dsid),"NAME",False)
-    #print "# E"
     replica_id  = Get("vm_pool","oid",str(vmid),"USER_TEMPLATE,REPLICA",False)
-    #print "# F"
 
     disks  = Get("vm_pool","oid",str(vmid),"TEMPLATE,DISK",False)
     if type(disks) <> type([]): disks = [disks]
@@ -118,9 +106,6 @@ def do_env(vmid,dsid,host,path):
     print "PERSISTENT='%s'" % persistent
     print "CAPACITY='%s'" % capacity
     return
-
-
-
 
 def do_ln(vmid,dsid,host):
   """ print an environment string for the ln command """
@@ -206,7 +191,14 @@ elif argv[1] == "getpath":
     exit(1)
   do_getpath(argv[2])
 
+elif argv[1] == "getlvm":
+  if len(argv)<3:
+    print "Usage: "+argv[0]+" getlvm <host>"
+    exit(1)
+  do_getlvm(argv[2])
+
 else:
   print "Unknown command: "+argv[0]
   exit(1)
 
+exit(0)

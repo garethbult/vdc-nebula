@@ -8,6 +8,7 @@ available for download from the website.
 Changes
 =======
 
+14 Jan 2013 - Added postmigrate_fail script
 11 Jan 2013 - This is the official RC2
 09 Jan 2013 - This looks like it might be Ok .. testing ..
 30 Dec 2013 - Do no use this revision - changes in progress.
